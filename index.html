@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>So's Freedom Adventure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ============================================================
+       TOKENS
+       MapleStory: 明るい空・キノコの家・HP/MPバー・金縁パネル
+       One Piece:  大海原・赤帆・紺/金/白
+    ============================================================ */
+    :root {
+      --panel-bg:     #FFFDE7;
+      --panel-bg2:    #FFF4C0;
+      --panel-border: #5C3310;
+      --panel-gold:   #C8960C;
+      --panel-shine:  #FFE866;
+      --hdr-top:      #6BAAE8;
+      --hdr-bot:      #0E3FA8;
+      --hdr-line:     #0A2888;
+      --hp-a:#FF5533; --hp-b:#BB0000;
+      --mp-a:#44AAFF; --mp-b:#0044CC;
+      --xp-a:#FFE033; --xp-b:#996600;
+      --btn-a:#FFE566; --btn-b:#FF8800; --btn-sh:#5C3800;
+      --sky-a:#1470C8; --sky-b:#3FA0E8; --sky-c:#96D8F4; --sky-d:#D4F0D0;
+      --gr1:#7BCF44; --gr2:#54AA22; --gr3:#3A8810;
+      --oc1:#1E8FE8; --oc2:#1060C0; --oc3:#0A3A88;
+      --red:#CC1111; --navy:#1A237E; --gold:#FFB800;
+      --dark:#2D1600;
+      --px:'Press Start 2P',monospace;
+      --rn:'M PLUS Rounded 1c',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:var(--rn);overflow-x:hidden;background:#0A1E3A}
+
+    /* ============================================================
+       HERO
+    ============================================================ */
+    .hero{
+      position:relative;
+      min-height:100vh;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* Sky — bright MapleStory blue */
+    .hero-sky{
+      position:absolute;inset:0;
+      background:
+        radial-gradient(ellipse 50% 22% at 30% 16%, rgba(255,240,150,.42) 0%, transparent 65%),
+        linear-gradient(180deg,
+          #1272CC 0%,
+          #2A90D8 8%,
+          #50B8F0 20%,
+          #86D2F6 34%,
+          #B8EAF8 48%,
+          #D0F4C8 58%,
+          #9ED85A 66%,
+          #6CB838 72%,
+          #4A9820 77%,
+          #38800E 80%,
+          #1C6A9C 82%,
+          #1870C0 87%,
+          #0A3A88 100%
+        );
+    }
+
+    /* ---- SUN ---- */
+    .sun-wrap{position:absolute;top:8%;left:22%;width:84px;height:84px;z-index:6}
+    .sun-glow{position:absolute;inset:-30px;background:radial-gradient(circle,rgba(255,228,60,.55) 0%,rgba(255,180,0,.2) 50%,transparent 70%);animation:glowP 3s ease-in-out infinite}
+    .sun-body{position:absolute;inset:0;background:radial-gradient(circle at 38% 36%,#FFFBC4 0%,#FFE43A 40%,#FFB800 100%);border-radius:50%;box-shadow:0 0 32px rgba(255,230,50,.9)}
+    .sun-rays{position:absolute;inset:-22px;animation:spinR 22s linear infinite}
+    .sun-ray{position:absolute;top:50%;left:50%;width:5px;height:22px;background:linear-gradient(to bottom,rgba(255,235,100,.9),rgba(255,200,0,0));border-radius:3px;transform-origin:50% 0;margin:-22px 0 0 -2.5px}
+    @keyframes glowP{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.18);opacity:1}}
+    @keyframes spinR{to{transform:rotate(360deg)}}
+
+    /* ---- CLOUDS ---- */
+    .cloud-el{position:absolute;z-index:7;animation:cloudDrift linear infinite}
+    .cloud-body{position:relative;background:#fff;border-radius:100px;box-shadow:0 4px 12px rgba(0,0,0,.07)}
+    .cloud-bump{position:absolute;background:#fff;border-radius:50%}
+    @keyframes cloudDrift{from{transform:translateX(-160%)}to{transform:translateX(120vw)}}
+
+    /* ---- PARALLAX LAYERS ---- */
+    .parallax{transition:transform .05s linear}
+
+    /* ---- FAR BACKGROUND HILLS ---- */
+    .far-hills{
+      position:absolute;
+      bottom:20%;left:0;right:0;
+      height:30%;
+      z-index:3;
+      pointer-events:none;
+    }
+
+    /* ---- BUILDINGS LAYER ---- */
+    .buildings-layer{
+      position:absolute;
+      bottom:19%;left:0;right:0;
+      z-index:8;
+      pointer-events:none;
+    }
+
+    /* ---- PLATFORMS LAYER ---- */
+    .platforms-layer{
+      position:absolute;
+      bottom:19%;left:0;right:0;
+      z-index:9;
+      pointer-events:none;
+    }
+
+    /* ---- GROUND / LANDSCAPE ---- */
+    .landscape-layer{
+      position:absolute;
+      bottom:19%;left:0;right:0;
+      z-index:10;
+      pointer-events:none;
+    }
+
+    /* ---- OCEAN ---- */
+    .ocean-layer{
+      position:absolute;
+      bottom:0;left:0;right:0;
+      height:22%;
+      z-index:11;
+    }
+    .ocean-body{
+      position:absolute;inset:0;
+      background:linear-gradient(180deg,var(--oc1) 0%,var(--oc2) 40%,var(--oc3) 100%);
+    }
+    .ocean-shimmer{
+      position:absolute;inset:0;
+      background:repeating-linear-gradient(90deg,transparent 0,transparent 70px,rgba(255,255,255,.05) 70px,rgba(255,255,255,.05) 90px);
+    }
+    .wave-wrap{position:absolute;top:0;left:0;right:0;height:54px;overflow:hidden}
+    .wave-path{position:absolute;top:0;width:200%;animation:waveSlide linear infinite}
+    .wave-path.back{animation-direction:reverse;opacity:.5}
+    @keyframes waveSlide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+    /* ---- ISLAND ---- */
+    .island-wrap{
+      position:absolute;bottom:21.5%;right:26%;
+      z-index:14;
+      animation:islandBob 4s ease-in-out infinite;
+    }
+    @keyframes islandBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+    /* ---- SHIP ---- */
+    .ship-wrap{
+      position:absolute;bottom:20.5%;right:6%;
+      z-index:13;
+      animation:shipBob 3.2s ease-in-out infinite;
+    }
+    @keyframes shipBob{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-14px) rotate(1.5deg)}}
+
+    /* ---- CHARACTER ---- */
+    .char-wrap{
+      position:absolute;bottom:22.5%;left:36%;
+      z-index:20;
+      animation:charBob 2.5s ease-in-out infinite;
+    }
+    @keyframes charBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    .speech-bubble{
+      position:absolute;bottom:calc(100% + 10px);left:50%;
+      transform:translateX(-30%);
+      background:#fff;
+      border:3px solid var(--panel-border);
+      border-radius:14px;
+      padding:8px 14px;
+      font-family:var(--rn);font-weight:800;font-size:12px;color:var(--dark);
+      white-space:nowrap;
+      box-shadow:3px 4px 10px rgba(0,0,0,.22);
+      z-index:21;
+    }
+    .speech-bubble::after{content:'';position:absolute;bottom:-13px;left:18%;border:8px solid transparent;border-top-color:var(--panel-border)}
+    .speech-bubble::before{content:'';position:absolute;bottom:-7px;left:calc(18% + 3px);border:5px solid transparent;border-top-color:#fff;z-index:1}
+    .char-shadow{width:44px;height:6px;background:rgba(0,0,0,.22);border-radius:50%;margin:2px auto 0;filter:blur(2px)}
+
+    /* ---- TITLE PANEL (MapleStory dialog style) ---- */
+    .title-panel{
+      position:relative;z-index:30;
+      width:min(460px,90vw);
+      background:linear-gradient(160deg,#FFFEF8,var(--panel-bg2));
+      border:4px solid var(--panel-border);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:
+        inset 0 0 0 3px var(--panel-shine),
+        0 20px 60px rgba(0,0,0,.55),
+        0 0 80px rgba(255,184,0,.15);
+      animation:panelFloat 4.5s ease-in-out infinite;
+    }
+    @keyframes panelFloat{
+      0%,100%{transform:translateY(0) rotate(-.2deg)}
+      50%{transform:translateY(-10px) rotate(.2deg)}
+    }
+    .tp-hdr{
+      background:linear-gradient(180deg,var(--hdr-top) 0%,#3A78D0 50%,var(--hdr-bot) 100%);
+      padding:13px 20px;
+      display:flex;align-items:center;justify-content:space-between;
+      border-bottom:3px solid var(--hdr-line);
+      box-shadow:inset 0 2px 0 rgba(255,255,255,.28);
+    }
+    .tp-hdr-lbl{font-family:var(--px);font-size:8px;color:#fff;text-shadow:1px 1px 0 #000;letter-spacing:.08em}
+    .win-dots{display:flex;gap:7px}
+    .win-dot{width:13px;height:13px;border-radius:50%;border:2px solid rgba(0,0,0,.25)}
+    .tp-body{padding:22px 28px 28px;text-align:center;position:relative}
+    .panel-deco{position:absolute;font-size:18px;opacity:.16}
+    .panel-deco.tl{top:8px;left:12px;transform:rotate(-20deg)}
+    .panel-deco.tr{top:8px;right:12px;transform:rotate(20deg)}
+    .panel-deco.bl{bottom:10px;left:12px;transform:rotate(15deg)}
+    .panel-deco.br{bottom:10px;right:12px;transform:rotate(-15deg)}
+    .title-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      background:linear-gradient(180deg,var(--hdr-top),var(--hdr-bot));
+      color:#fff;font-family:var(--px);font-size:7px;
+      padding:5px 14px;border-radius:20px;
+      border:2px solid var(--panel-border);
+      box-shadow:0 3px 0 var(--panel-border);
+      margin-bottom:16px;
+    }
+    .title-main{
+      font-family:var(--px);
+      font-size:clamp(13px,3.2vw,20px);
+      color:var(--navy);
+      line-height:2.0;
+      text-shadow:3px 3px 0 rgba(0,0,0,.12),0 0 24px rgba(255,184,0,.28);
+      margin-bottom:4px;
+    }
+    .title-main .red{color:var(--red)}
+    .gold-div{
+      height:3px;
+      background:linear-gradient(90deg,transparent,var(--panel-gold),var(--panel-shine),var(--panel-gold),transparent);
+      margin:14px 0;border-radius:2px;
+    }
+    .title-tag{font-family:var(--rn);font-weight:700;font-size:13px;color:#6B4400;line-height:1.8;margin-bottom:22px}
+    .ms-btn{
+      font-family:var(--px);font-size:9px;color:#3A1400;
+      background:linear-gradient(180deg,var(--btn-a) 0%,#FFCC00 45%,var(--btn-b) 100%);
+      border:3px solid #7A4A00;border-radius:10px;
+      padding:12px 26px;cursor:pointer;
+      box-shadow:0 5px 0 var(--btn-sh),0 8px 16px rgba(0,0,0,.35);
+      text-shadow:0 1px 0 rgba(255,255,255,.55);
+      transition:transform .1s,box-shadow .1s;
+    }
+    .ms-btn:hover{transform:translateY(-3px);box-shadow:0 8px 0 var(--btn-sh),0 12px 18px rgba(0,0,0,.3)}
+    .ms-btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--btn-sh)}
+
+    .scroll-hint{
+      position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+      z-index:30;animation:sHint 1.1s ease-in-out infinite;
+      cursor:pointer;background:none;border:none;
+    }
+    @keyframes sHint{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+    .scroll-hint span{font-family:var(--px);font-size:7px;color:rgba(255,255,255,.85);text-shadow:1px 1px 0 rgba(0,0,0,.6)}
+
+    /* ============================================================
+       NATURE DIVIDER
+    ============================================================ */
+    .nature-div{position:relative;overflow:hidden;background:var(--gr3);line-height:0}
+    .nature-div svg{display:block;width:100%}
+
+    /* ============================================================
+       MAIN
+    ============================================================ */
+    main{
+      position:relative;
+      background:
+        radial-gradient(ellipse 100% 22% at 50% 0%,rgba(30,120,220,.18) 0%,transparent 70%),
+        linear-gradient(180deg,#0A2855 0%,#061830 100%);
+    }
+    .section{max-width:980px;margin:0 auto;padding:56px 22px}
+
+    /* Quest header */
+    .quest-hdr{display:flex;align-items:center;gap:14px;margin-bottom:32px}
+    .quest-ico{
+      width:38px;height:38px;
+      background:linear-gradient(135deg,var(--gold),#FF7700);
+      border:3px solid var(--panel-border);border-radius:9px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;box-shadow:0 3px 0 var(--panel-border);flex-shrink:0;
+    }
+    .quest-lbl{font-family:var(--px);font-size:clamp(8px,2vw,12px);color:var(--gold);text-shadow:2px 2px 0 rgba(0,0,0,.55);white-space:nowrap}
+    .quest-line{flex:1;height:3px;background:linear-gradient(90deg,var(--gold),rgba(255,184,0,.08));border-radius:2px}
+
+    /* ============================================================
+       PROFILE PANEL
+    ============================================================ */
+    .profile-panel{
+      background:linear-gradient(160deg,#FFFEF8,var(--panel-bg2));
+      border:4px solid var(--panel-border);border-radius:16px;
+      overflow:hidden;
+      box-shadow:inset 0 0 0 3px var(--panel-shine),0 10px 40px rgba(0,0,0,.55);
+    }
+    .ms-ph{
+      background:linear-gradient(180deg,var(--hdr-top) 0%,#3A78D0 50%,var(--hdr-bot) 100%);
+      padding:12px 18px;display:flex;align-items:center;gap:10px;
+      border-bottom:3px solid var(--hdr-line);
+      box-shadow:inset 0 2px 0 rgba(255,255,255,.28);
+    }
+    .ms-ph-title{font-family:var(--px);font-size:9px;color:#fff;text-shadow:1px 1px 0 #000;flex:1}
+    .ms-close{
+      width:22px;height:22px;
+      background:linear-gradient(135deg,#FF7766,#BB1100);
+      border:2px solid #770000;border-radius:5px;
+      color:#fff;font-size:11px;font-weight:bold;
+      display:flex;align-items:center;justify-content:center;
+      cursor:default;box-shadow:0 2px 0 #440000;
+    }
+    .profile-body{padding:22px 24px;display:flex;gap:24px;flex-wrap:wrap}
+
+    .avatar-col{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+    .avatar-frame{
+      width:92px;height:92px;
+      background:linear-gradient(135deg,#1A62B8,#2A88D8);
+      border:3px solid var(--panel-border);border-radius:12px;
+      box-shadow:inset 0 0 0 2px var(--panel-gold),inset 0 0 16px rgba(0,0,0,.3);
+      display:flex;align-items:flex-end;justify-content:center;
+      overflow:hidden;padding-bottom:4px;
+    }
+    .lv-chip{background:linear-gradient(180deg,var(--hdr-top),var(--hdr-bot));color:#fff;font-family:var(--px);font-size:7px;padding:4px 12px;border-radius:20px;border:2px solid var(--panel-border);box-shadow:0 2px 0 var(--panel-border)}
+    .job-chip{background:linear-gradient(180deg,#C8960C,#7A5000);color:#FFF0A0;font-family:var(--px);font-size:6px;padding:4px 10px;border-radius:20px;border:2px solid var(--panel-border);box-shadow:0 2px 0 var(--panel-border)}
+
+    .stats-col{flex:1;min-width:220px}
+    .char-name{font-family:var(--px);font-size:13px;color:var(--navy);text-shadow:2px 2px 0 rgba(0,0,0,.1);margin-bottom:8px}
+    .char-desc{font-size:13px;color:#5C3A00;line-height:1.9;margin-bottom:18px}
+
+    .stat-bars{display:flex;flex-direction:column;gap:9px}
+    .stat-row{display:grid;grid-template-columns:30px 1fr 50px;align-items:center;gap:8px}
+    .stat-key{font-family:var(--px);font-size:6px;color:var(--dark);text-align:right}
+    .stat-track{height:14px;background:#1E0A00;border:2px solid #5C3000;border-radius:3px;overflow:hidden;position:relative}
+    .stat-fill{height:100%;position:relative;border-radius:1px}
+    .stat-fill::after{content:'';position:absolute;top:2px;left:4px;right:4px;height:4px;background:rgba(255,255,255,.38);border-radius:2px}
+    .stat-fill.hp{background:linear-gradient(90deg,var(--hp-b),var(--hp-a));width:82%}
+    .stat-fill.mp{background:linear-gradient(90deg,var(--mp-b),var(--mp-a));width:65%}
+    .stat-fill.xp{background:linear-gradient(90deg,var(--xp-b),var(--xp-a));width:44%}
+    .stat-val{font-family:var(--px);font-size:6px;color:var(--dark);white-space:nowrap}
+
+    .skills-row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+    .skill-slot{
+      width:38px;height:38px;
+      background:var(--panel-bg);border:3px solid var(--panel-border);border-radius:7px;
+      box-shadow:inset 0 0 0 1px var(--panel-gold),0 3px 0 var(--panel-border);
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;cursor:default;
+      transition:transform .12s,box-shadow .12s;
+      position:relative;
+    }
+    .skill-slot:hover{transform:scale(1.14) translateY(-3px);box-shadow:inset 0 0 0 1px var(--panel-shine),0 5px 0 var(--panel-border),0 0 12px rgba(255,184,0,.5)}
+    .skill-slot .tip{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--panel-border);color:#fff;font-family:var(--px);font-size:6px;padding:4px 8px;border-radius:4px;white-space:nowrap}
+    .skill-slot:hover .tip{display:block}
+
+    /* ============================================================
+       APP CARDS
+    ============================================================ */
+    .apps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:22px}
+    .app-card{
+      background:linear-gradient(160deg,#FFFEF8,var(--panel-bg2));
+      border:4px solid var(--panel-border);border-radius:15px;
+      overflow:hidden;text-decoration:none;color:inherit;display:block;
+      transition:transform .18s,box-shadow .18s;
+      box-shadow:inset 0 0 0 2px var(--panel-shine),0 6px 22px rgba(0,0,0,.45);
+    }
+    .app-card:not(.app-card--soon):hover{
+      transform:translateY(-7px) scale(1.015);
+      box-shadow:inset 0 0 0 2px #FFE566,0 14px 36px rgba(0,0,0,.55),0 0 28px rgba(255,184,0,.35);
+    }
+    .ac-hdr{
+      background:linear-gradient(180deg,var(--hdr-top) 0%,#3A78D0 50%,var(--hdr-bot) 100%);
+      padding:13px 16px;display:flex;align-items:center;gap:12px;
+      border-bottom:3px solid var(--hdr-line);
+      box-shadow:inset 0 2px 0 rgba(255,255,255,.22);
+    }
+    .ac-ico{
+      width:46px;height:46px;
+      background:var(--panel-bg);border:3px solid var(--panel-gold);border-radius:9px;
+      box-shadow:inset 0 0 0 1px var(--panel-shine),0 2px 0 var(--panel-border);
+      display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;
+    }
+    .ac-meta{flex:1}
+    .ac-name{font-family:var(--px);font-size:8px;color:#fff;text-shadow:1px 1px 0 #000;line-height:1.7}
+    .ac-tag{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);padding:2px 8px;border-radius:10px;font-size:9px;color:rgba(255,255,255,.82);margin-top:3px}
+    .ac-body{padding:16px 18px 18px}
+    .ac-desc{font-size:13px;color:#4A2C00;line-height:1.85;margin-bottom:14px}
+    .ac-btn{
+      font-family:var(--px);font-size:7px;color:#3A1400;
+      background:linear-gradient(180deg,#FFE566 0%,#FFCC00 50%,#FF9900 100%);
+      border:2px solid #7A4A00;border-radius:8px;
+      padding:8px 18px;box-shadow:0 3px 0 #4A2A00;
+      display:inline-block;cursor:pointer;transition:transform .1s;
+    }
+    .app-card:hover .ac-btn{transform:translateY(-2px);box-shadow:0 5px 0 #4A2A00}
+    .app-card--soon{opacity:.62;cursor:default}
+    .app-card--soon .ac-hdr{background:linear-gradient(180deg,#666,#333);border-bottom-color:#111;box-shadow:none}
+    .locked-tag{font-family:var(--px);font-size:7px;color:#888;background:#1E1E1E;border:2px solid #444;border-radius:12px;padding:5px 12px;display:inline-block;box-shadow:0 2px 0 #111}
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer{background:#040E1E;border-top:4px solid var(--panel-gold);padding:40px 20px 32px;text-align:center}
+    .ft-emb{margin-bottom:14px;opacity:.5}
+    .ft-title{font-family:var(--px);font-size:11px;color:var(--gold);text-shadow:2px 2px 0 rgba(0,0,0,.5);margin-bottom:10px}
+    .ft-tag{font-family:var(--rn);font-weight:700;font-size:14px;color:#3A6A9A;margin-bottom:18px}
+    .ft-copy{font-family:var(--px);font-size:7px;color:#1E3050}
+
+    /* ============================================================
+       EFFECTS
+    ============================================================ */
+    .sparkle-dot{position:fixed;border-radius:50%;pointer-events:none;z-index:9999;animation:sparkUp ease-out forwards}
+    @keyframes sparkUp{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-70px) scale(0);opacity:0}}
+    .float-leaf{position:absolute;pointer-events:none;z-index:12;animation:leafUp linear forwards}
+    @keyframes leafUp{0%{transform:translateY(0) rotate(0deg);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateY(-80px) rotate(400deg);opacity:0}}
+
+    @media(max-width:640px){
+      .profile-body{flex-direction:column}
+      .char-wrap{left:5%}
+      .island-wrap{display:none}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     HERO
+══════════════════════════════════════════ -->
+<section class="hero" id="hero">
+
+  <div class="hero-sky"></div>
+
+  <!-- Sun -->
+  <div class="sun-wrap">
+    <div class="sun-glow"></div>
+    <div class="sun-body"></div>
+    <div class="sun-rays" id="sun-rays"></div>
+  </div>
+
+  <!-- Clouds -->
+  <div id="clouds-container"></div>
+
+  <!-- Far hills (parallax back) -->
+  <svg class="far-hills parallax" data-speed="0.2"
+       viewBox="0 0 1440 200" xmlns="http://www.w3.org/2000/svg"
+       preserveAspectRatio="none" style="width:100%;height:auto;display:block">
+    <ellipse cx="250"  cy="200" rx="340" ry="130" fill="#5A9E2A" opacity=".55"/>
+    <ellipse cx="800"  cy="200" rx="420" ry="110" fill="#50921E" opacity=".5"/>
+    <ellipse cx="1300" cy="200" rx="360" ry="120" fill="#56981F" opacity=".52"/>
+    <!-- Far tiny trees -->
+    <rect x="80"  y="90" width="8"  height="60" fill="#3A7010" opacity=".5"/>
+    <ellipse cx="84"  cy="84" rx="22" ry="28" fill="#3A9018" opacity=".5"/>
+    <rect x="340" y="100" width="7" height="50" fill="#3A7010" opacity=".45"/>
+    <ellipse cx="343" cy="94" rx="18" ry="24" fill="#3A9018" opacity=".45"/>
+    <rect x="680" y="92" width="9"  height="58" fill="#3A7010" opacity=".5"/>
+    <ellipse cx="685" cy="86" rx="24" ry="30" fill="#3A9018" opacity=".5"/>
+    <rect x="1180" y="88" width="8" height="62" fill="#3A7010" opacity=".48"/>
+    <ellipse cx="1184" cy="82" rx="22" ry="28" fill="#3A9018" opacity=".48"/>
+  </svg>
+
+  <!-- ========================================
+       BUILDINGS LAYER
+       (MapleStoryキノコの家 + 木の建物)
+  ======================================== -->
+  <svg class="buildings-layer parallax" data-speed="0.4"
+       viewBox="0 0 1440 360" xmlns="http://www.w3.org/2000/svg"
+       style="width:100%;height:auto;display:block">
+
+    <defs>
+      <radialGradient id="winGlow" cx="40%" cy="40%" r="60%">
+        <stop offset="0%"   stop-color="#FFF4C0"/>
+        <stop offset="100%" stop-color="#CC8820"/>
+      </radialGradient>
+      <radialGradient id="winGlowBlue" cx="40%" cy="40%" r="60%">
+        <stop offset="0%"   stop-color="#B8E8FF"/>
+        <stop offset="100%" stop-color="#2A88CC"/>
+      </radialGradient>
+      <filter id="treeShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="4" dy="8" stdDeviation="6" flood-color="rgba(0,80,0,.25)"/>
+      </filter>
+    </defs>
+
+    <!-- ╔══════════════════╗
+         ║  Henesys-style   ║
+         ║  MUSHROOM HOUSE  ║ (left)
+         ╚══════════════════╝ -->
+    <g transform="translate(195,352)">
+      <!-- Ground shadow -->
+      <ellipse cx="0" cy="6" rx="90" ry="18" fill="rgba(0,0,0,.18)"/>
+
+      <!-- Body (round wooden building) -->
+      <ellipse cx="0" cy="-15" rx="74" ry="88" fill="#D4A860"/>
+      <!-- Wood grain shading (darker left) -->
+      <ellipse cx="20" cy="-15" rx="58" ry="72" fill="#BB8838" opacity=".35"/>
+      <!-- Highlight (lighter right) -->
+      <ellipse cx="-22" cy="-25" rx="32" ry="48" fill="rgba(255,230,150,.25)"/>
+      <!-- Horizontal wood lines -->
+      <path d="M-72 -38 Q0 -46 72 -38" fill="none" stroke="#A07828" stroke-width="2" opacity=".4"/>
+      <path d="M-74 -15 Q0 -22 74 -15" fill="none" stroke="#A07828" stroke-width="1.8" opacity=".38"/>
+      <path d="M-72  10 Q0   4  72  10" fill="none" stroke="#A07828" stroke-width="1.5" opacity=".35"/>
+      <path d="M-66  36 Q0  30  66  36" fill="none" stroke="#A07828" stroke-width="1.5" opacity=".3"/>
+      <path d="M-54  60 Q0  54  54  60" fill="none" stroke="#A07828" stroke-width="1.2" opacity=".28"/>
+
+      <!-- Chimney -->
+      <rect x="32"  y="-134" width="20" height="48" rx="4" fill="#B08830"/>
+      <rect x="28"  y="-140" width="28" height="10" rx="4" fill="#907020"/>
+      <!-- Smoke puffs -->
+      <circle cx="42" cy="-150" r="7"  fill="rgba(210,210,210,.6)"/>
+      <circle cx="46" cy="-164" r="9"  fill="rgba(210,210,210,.45)"/>
+      <circle cx="40" cy="-178" r="11" fill="rgba(210,210,210,.28)"/>
+
+      <!-- Mushroom cap underside/rim -->
+      <ellipse cx="0" cy="-86"  rx="86" ry="22" fill="#881810"/>
+      <ellipse cx="0" cy="-88"  rx="84" ry="20" fill="#AA2010"/>
+
+      <!-- Mushroom cap dome (MapleStory red) -->
+      <path d="M-86 -88 Q-92 -116 -68 -142 Q-38 -168 0 -168 Q38 -168 68 -142 Q92 -116 86 -88 Z" fill="#CC3322"/>
+      <!-- Cap shine -->
+      <path d="M-38 -88 Q-42 -116 -24 -142 Q-8 -160 4 -158 Q-12 -138 -14 -112 Q-14 -100 -10 -88 Z" fill="rgba(255,255,255,.18)"/>
+      <!-- Cap dark shadow right -->
+      <path d="M58 -88 Q78 -100 74 -130 Q62 -156 50 -163 Q66 -140 68 -112 Q70 -98 58 -88 Z" fill="rgba(0,0,0,.14)"/>
+
+      <!-- White spots on cap -->
+      <ellipse cx="-44" cy="-122" rx="15" ry="11" fill="rgba(255,255,255,.92)"/>
+      <ellipse cx="22"  cy="-140" rx="18" ry="13" fill="rgba(255,255,255,.92)"/>
+      <ellipse cx="58"  cy="-112" rx="11" ry="9"  fill="rgba(255,255,255,.88)"/>
+      <ellipse cx="-10" cy="-152" rx="9"  ry="7"  fill="rgba(255,255,255,.8)"/>
+
+      <!-- Left window -->
+      <circle cx="-26" cy="-22" r="20" fill="#1A0800"/>
+      <circle cx="-26" cy="-22" r="17" fill="url(#winGlow)"/>
+      <circle cx="-26" cy="-22" r="20" fill="none" stroke="#7A4A00" stroke-width="4.5"/>
+      <line x1="-26" y1="-40" x2="-26" y2="-4"  stroke="#7A4A00" stroke-width="2.5"/>
+      <line x1="-44" y1="-22" x2="-8" y2="-22"  stroke="#7A4A00" stroke-width="2.5"/>
+      <!-- Right window -->
+      <circle cx="26"  cy="-22" r="20" fill="#1A0800"/>
+      <circle cx="26"  cy="-22" r="17" fill="url(#winGlow)"/>
+      <circle cx="26"  cy="-22" r="20" fill="none" stroke="#7A4A00" stroke-width="4.5"/>
+      <line x1="26" y1="-40" x2="26" y2="-4"   stroke="#7A4A00" stroke-width="2.5"/>
+      <line x1="8"  y1="-22" x2="44" y2="-22"  stroke="#7A4A00" stroke-width="2.5"/>
+
+      <!-- Upper small window -->
+      <circle cx="0" cy="-60" r="12" fill="#1A0800"/>
+      <circle cx="0" cy="-60" r="10" fill="url(#winGlow)"/>
+      <circle cx="0" cy="-60" r="12" fill="none" stroke="#7A4A00" stroke-width="3"/>
+
+      <!-- Arched door -->
+      <path d="M-22 90 Q-22 46 0 42 Q22 46 22 90 Z" fill="#4A2000"/>
+      <path d="M-26 90 Q-26 42 0 38 Q26 42 26 90 Z" fill="none" stroke="#8B5020" stroke-width="4.5"/>
+      <!-- Door panel lines -->
+      <line x1="-16" y1="55" x2="-16" y2="88" stroke="#2A1000" stroke-width="1.5" opacity=".5"/>
+      <line x1="-6"  y1="52" x2="-6"  y2="88" stroke="#2A1000" stroke-width="1.5" opacity=".4"/>
+      <line x1="4"   y1="51" x2="4"   y2="88" stroke="#2A1000" stroke-width="1.5" opacity=".4"/>
+      <line x1="14"  y1="52" x2="14"  y2="88" stroke="#2A1000" stroke-width="1.5" opacity=".5"/>
+      <!-- Door knob -->
+      <circle cx="17" cy="68" r="5"  fill="#C8960C"/>
+      <circle cx="15" cy="66" r="2.5" fill="#FFE066"/>
+
+      <!-- Steps -->
+      <rect x="-30" y="88"  width="60" height="10" rx="3" fill="#C09848"/>
+      <rect x="-40" y="98"  width="80" height="9"  rx="2" fill="#A88030"/>
+      <rect x="-50" y="107" width="100" height="8" rx="2" fill="#907020"/>
+
+      <!-- Ivy/vines left -->
+      <path d="M-70 -55 C-80 -20, -76 15, -72 52" fill="none" stroke="#2A7010" stroke-width="3.5" opacity=".85"/>
+      <ellipse cx="-72" cy="-57" rx="8" ry="6" fill="#3A9018"/>
+      <ellipse cx="-77" cy="-30" rx="9" ry="7" fill="#44AA22"/>
+      <ellipse cx="-74" cy="-2"  rx="8" ry="6" fill="#3A9018"/>
+      <ellipse cx="-72" cy="24"  rx="7" ry="6" fill="#44AA22"/>
+      <ellipse cx="-71" cy="50"  rx="6" ry="5" fill="#3A9018"/>
+      <!-- Ivy right -->
+      <path d="M68 -45 C76 -12, 72 22, 69 55" fill="none" stroke="#2A7010" stroke-width="3" opacity=".75"/>
+      <ellipse cx="69" cy="-47" rx="7" ry="5" fill="#3A9018"/>
+      <ellipse cx="74" cy="-18" rx="8" ry="6" fill="#44AA22"/>
+      <ellipse cx="71" cy="12"  rx="7" ry="5" fill="#3A9018"/>
+      <ellipse cx="70" cy="38"  rx="6" ry="5" fill="#44AA22"/>
+
+      <!-- Sign in front -->
+      <rect x="-30" y="108" width="60" height="22" rx="3" fill="#C09030"/>
+      <rect x="-28" y="110" width="56" height="18" rx="2" fill="#E8B840"/>
+      <text x="0" y="123" text-anchor="middle" font-size="9" font-family="'M PLUS Rounded 1c',sans-serif" font-weight="800" fill="#5C2800">ENTER</text>
+    </g>
+
+    <!-- ╔══════════════════╗
+         ║  Ellinia-style   ║
+         ║  TREE BUILDING   ║ (right, partially visible)
+         ╚══════════════════╝ -->
+    <g transform="translate(1230,352)" opacity=".88">
+      <ellipse cx="0" cy="6" rx="68" ry="14" fill="rgba(0,0,0,.15)"/>
+      <!-- Trunk -->
+      <rect x="-28" y="-160" width="56" height="166" rx="28" fill="#8B5020"/>
+      <!-- Trunk shading -->
+      <rect x="8"   y="-160" width="14" height="166" rx="7" fill="#6B3A10" opacity=".4"/>
+      <rect x="-24" y="-160" width="12" height="166" rx="6" fill="rgba(255,200,100,.15)"/>
+      <!-- Bark horizontal lines -->
+      <path d="M-26 -120 Q0 -126 26 -120" fill="none" stroke="#6B3A10" stroke-width="2" opacity=".4"/>
+      <path d="M-27 -80  Q0 -86  27 -80"  fill="none" stroke="#6B3A10" stroke-width="2" opacity=".35"/>
+      <path d="M-26 -40  Q0 -46  26 -40"  fill="none" stroke="#6B3A10" stroke-width="2" opacity=".3"/>
+      <!-- Round rooftop -->
+      <ellipse cx="0" cy="-152" rx="74" ry="20" fill="#6B4818"/>
+      <ellipse cx="0" cy="-168" rx="66" ry="32" fill="#7A5422"/>
+      <!-- Thatched roof top -->
+      <ellipse cx="0" cy="-178" rx="54" ry="24" fill="#8B6030"/>
+      <ellipse cx="0" cy="-186" rx="40" ry="16" fill="#9A7040"/>
+      <!-- Window (circular, blue-ish like Ellinia) -->
+      <circle cx="0" cy="-92" r="20" fill="#0A1A2A"/>
+      <circle cx="0" cy="-92" r="17" fill="url(#winGlowBlue)"/>
+      <circle cx="0" cy="-92" r="20" fill="none" stroke="#5A3A10" stroke-width="4"/>
+      <line x1="0" y1="-110" x2="0" y2="-74" stroke="#5A3A10" stroke-width="2.5"/>
+      <line x1="-18" y1="-92" x2="18" y2="-92" stroke="#5A3A10" stroke-width="2.5"/>
+      <!-- Lower windows -->
+      <circle cx="-18" cy="-44" r="14" fill="#0A1A2A"/>
+      <circle cx="-18" cy="-44" r="12" fill="url(#winGlowBlue)"/>
+      <circle cx="-18" cy="-44" r="14" fill="none" stroke="#5A3A10" stroke-width="3"/>
+      <circle cx="18"  cy="-44" r="14" fill="#0A1A2A"/>
+      <circle cx="18"  cy="-44" r="12" fill="url(#winGlowBlue)"/>
+      <circle cx="18"  cy="-44" r="14" fill="none" stroke="#5A3A10" stroke-width="3"/>
+      <!-- Arched door -->
+      <path d="M-18 6 Q-18 -28 0 -32 Q18 -28 18 6 Z" fill="#3A1800"/>
+      <path d="M-20 6 Q-20 -30 0 -34 Q20 -30 20 6 Z" fill="none" stroke="#6B3A10" stroke-width="4"/>
+      <!-- Mossy vines -->
+      <path d="M-26 -80 C-34 -50, -30 -20, -28 10" fill="none" stroke="#2A6010" stroke-width="3" opacity=".7"/>
+      <ellipse cx="-27" cy="-82" rx="7" ry="5" fill="#3AA010"/>
+      <ellipse cx="-32" cy="-60" rx="8" ry="6" fill="#44B818"/>
+      <ellipse cx="-29" cy="-36" rx="7" ry="5" fill="#3AA010"/>
+      <ellipse cx="-27" cy="-10" rx="6" ry="5" fill="#44B818"/>
+      <!-- Glowing leaves (Ellinia magic) -->
+      <circle cx="-38" cy="-135" r="8" fill="#A8F020" opacity=".6"/>
+      <circle cx="42"  cy="-145" r="6" fill="#80E010" opacity=".55"/>
+      <circle cx="-18" cy="-155" r="5" fill="#C0FF40" opacity=".5"/>
+      <circle cx="30"  cy="-130" r="7" fill="#A8F020" opacity=".5"/>
+    </g>
+
+    <!-- Rope bridge connecting the two (partially visible) -->
+    <path d="M330 260 Q540 300 660 280 Q780 260 900 275" fill="none" stroke="#C8A050" stroke-width="5" stroke-dasharray="12,6" opacity=".7"/>
+    <!-- Rope posts -->
+    <rect x="326" y="248" width="8" height="60" fill="#A07030" rx="2"/>
+    <rect x="660" y="250" width="8" height="58" fill="#A07030" rx="2"/>
+    <!-- Rope railings (upper) -->
+    <path d="M330 248 Q540 280 660 260 Q780 240 900 255" fill="none" stroke="#C8A050" stroke-width="3" stroke-dasharray="10,5" opacity=".55"/>
+
+    <!-- Distant building (far right, very small) -->
+    <g transform="translate(1430,355)" opacity=".45">
+      <ellipse cx="0" cy="0" rx="28" ry="35" fill="#D4A860"/>
+      <ellipse cx="0" cy="-30" rx="32" ry="18" fill="#AA2010"/>
+      <ellipse cx="0" cy="-38" rx="28" ry="10" fill="#882010"/>
+    </g>
+
+  </svg>
+
+  <!-- ========================================
+       PLATFORMS LAYER (横スクロール的な足場)
+  ======================================== -->
+  <svg class="platforms-layer"
+       viewBox="0 0 1440 120" xmlns="http://www.w3.org/2000/svg"
+       style="width:100%;height:auto;display:block">
+    <!-- Platform 1 (left, mid height) -->
+    <rect x="60"   y="40" width="160" height="18" rx="5" fill="#72C438"/>
+    <rect x="60"   y="54" width="160" height="10" rx="2" fill="#5AA020"/>
+    <rect x="60"   y="62" width="160" height="6"  rx="0" fill="#7A5A28"/>
+    <!-- Flowers on platform 1 -->
+    <circle cx="90"  cy="38" r="5"   fill="#FF69B4"/>
+    <circle cx="90"  cy="38" r="2.5" fill="#FFE135"/>
+    <circle cx="115" cy="37" r="4"   fill="#FFE135"/>
+    <circle cx="115" cy="37" r="2"   fill="#FF8800"/>
+    <circle cx="140" cy="38" r="5"   fill="#FF69B4"/>
+    <circle cx="140" cy="38" r="2.5" fill="#FFE135"/>
+    <!-- Mushroom on platform 1 -->
+    <rect x="192" y="32" width="6" height="8" fill="#F0DEB0"/>
+    <ellipse cx="195" cy="32" rx="10" ry="6" fill="#CC2200"/>
+    <ellipse cx="190" cy="29" rx="2.5" ry="2" fill="white"/>
+    <ellipse cx="198" cy="28" rx="2"   ry="1.8" fill="white"/>
+
+    <!-- Platform 2 (center-right, higher) -->
+    <rect x="480"  y="18" width="220" height="18" rx="5" fill="#72C438"/>
+    <rect x="480"  y="32" width="220" height="10" rx="2" fill="#5AA020"/>
+    <rect x="480"  y="40" width="220" height="6"  rx="0" fill="#7A5A28"/>
+    <!-- Flowers on platform 2 -->
+    <circle cx="520" cy="16" r="5.5" fill="#FFDD33"/>
+    <circle cx="520" cy="16" r="2.5" fill="#FF8800"/>
+    <circle cx="560" cy="15" r="5"   fill="#FF69B4"/>
+    <circle cx="560" cy="15" r="2.5" fill="#FFE135"/>
+    <circle cx="600" cy="16" r="5.5" fill="#88CCFF"/>
+    <circle cx="600" cy="16" r="2.5" fill="#FFFFFF"/>
+    <circle cx="640" cy="15" r="5"   fill="#FFDD33"/>
+    <circle cx="640" cy="15" r="2.5" fill="#FF8800"/>
+    <!-- Butterfly -->
+    <rect x="540" y="6"  width="8" height="5" fill="#FF69B4" opacity=".85"/>
+    <rect x="537" y="4"  width="5" height="7" fill="#FFB6C1" opacity=".7"/>
+
+    <!-- Platform 3 (right area, mid) -->
+    <rect x="950"  y="50" width="160" height="18" rx="5" fill="#72C438"/>
+    <rect x="950"  y="64" width="160" height="10" rx="2" fill="#5AA020"/>
+    <rect x="950"  y="72" width="160" height="6"  rx="0" fill="#7A5A28"/>
+    <!-- Mushroom on platform 3 -->
+    <rect x="978" y="44" width="7" height="9" fill="#F0DEB0"/>
+    <ellipse cx="981" cy="44" rx="12" ry="7" fill="#FF7700"/>
+    <ellipse cx="975" cy="41" rx="3"  ry="2.5" fill="white"/>
+    <ellipse cx="985" cy="39" rx="2.5" ry="2" fill="white"/>
+    <!-- Star sparkle on platform -->
+    <rect x="1060" y="45" width="5" height="5" fill="#FFE135"/>
+    <rect x="1062" y="43" width="1" height="9" fill="#FFE135" opacity=".6"/>
+    <rect x="1058" y="47" width="9" height="1" fill="#FFE135" opacity=".6"/>
+  </svg>
+
+  <!-- Landscape / foreground ground -->
+  <svg class="landscape-layer"
+       viewBox="0 0 1440 200" xmlns="http://www.w3.org/2000/svg"
+       preserveAspectRatio="none" style="width:100%;height:auto;display:block">
+    <!-- Back hill -->
+    <path d="M0 160 C200 100 400 150 600 120 C800 90 960 130 1140 100 C1320 70 1440 120 1440 120 L1440 200 L0 200 Z" fill="#5AA828"/>
+    <!-- Main ground -->
+    <path d="M0 175 C160 140 320 170 480 155 C640 140 760 120 920 148 C1080 176 1200 150 1360 158 L1440 154 L1440 200 L0 200 Z" fill="#6CBF38"/>
+    <!-- Ground shadow line -->
+    <path d="M0 182 C160 150 320 178 480 165 C640 152 760 132 920 158 C1080 184 1200 162 1360 168 L1440 164 L1440 200 L0 200 Z" fill="#5AA020" opacity=".55"/>
+
+    <!-- Near trees (foreground, larger) -->
+    <!-- Tree left -->
+    <rect x="370" y="100" width="10" height="60" fill="#7A5028"/>
+    <ellipse cx="375" cy="90" rx="28" ry="34" fill="#3A9820"/>
+    <ellipse cx="375" cy="78" rx="22" ry="26" fill="#48B028"/>
+    <ellipse cx="375" cy="68" rx="14" ry="18" fill="#56C038"/>
+    <!-- Tree right -->
+    <rect x="1040" y="90" width="10" height="68" fill="#7A5028"/>
+    <ellipse cx="1045" cy="80" rx="30" ry="36" fill="#3A9820"/>
+    <ellipse cx="1045" cy="66" rx="24" ry="28" fill="#48B028"/>
+    <ellipse cx="1045" cy="52" rx="16" ry="20" fill="#56C038"/>
+    <!-- Maple tree (red) -->
+    <rect x="760" y="110" width="9" height="56" fill="#7A5028"/>
+    <ellipse cx="764" cy="100" rx="30" ry="26" fill="#BB2800"/>
+    <ellipse cx="764" cy="88"  rx="24" ry="22" fill="#CC3A10"/>
+    <ellipse cx="764" cy="78"  rx="16" ry="16" fill="#DD4820"/>
+    <!-- Maple sparkles -->
+    <rect x="728" y="92"  width="5" height="5" fill="#FFE135" opacity=".8"/>
+    <rect x="792" y="88"  width="4" height="4" fill="#FFE135" opacity=".75"/>
+    <rect x="750" y="80"  width="4" height="4" fill="#FFE135" opacity=".7"/>
+
+    <!-- Flowers ground level -->
+    <!-- Pink cluster -->
+    <circle cx="290" cy="170" r="6"   fill="#FF69B4"/>
+    <circle cx="283" cy="170" r="5.5" fill="#FF8DC0"/>
+    <circle cx="297" cy="170" r="5.5" fill="#FF4AA0"/>
+    <circle cx="290" cy="163" r="5.5" fill="#FF8DC0"/>
+    <circle cx="290" cy="177" r="5.5" fill="#FF69B4"/>
+    <circle cx="290" cy="170" r="4"   fill="#FFE135"/>
+    <!-- Yellow cluster -->
+    <circle cx="620" cy="172" r="5.5" fill="#FFE135"/>
+    <circle cx="613" cy="172" r="5"   fill="#FFD020"/>
+    <circle cx="627" cy="172" r="5"   fill="#FFE135"/>
+    <circle cx="620" cy="165" r="5"   fill="#FFD020"/>
+    <circle cx="620" cy="179" r="5"   fill="#FFE135"/>
+    <circle cx="620" cy="172" r="3.5" fill="#FF8800"/>
+    <!-- Blue flower -->
+    <circle cx="880" cy="173" r="5.5" fill="#6699FF"/>
+    <circle cx="873" cy="173" r="5"   fill="#5588EE"/>
+    <circle cx="887" cy="173" r="5"   fill="#6699FF"/>
+    <circle cx="880" cy="166" r="5"   fill="#5588EE"/>
+    <circle cx="880" cy="180" r="5"   fill="#6699FF"/>
+    <circle cx="880" cy="173" r="3.5" fill="#FFEE55"/>
+    <!-- White flower -->
+    <circle cx="1200" cy="171" r="5.5" fill="white"/>
+    <circle cx="1193" cy="171" r="5"   fill="#F0F0F0"/>
+    <circle cx="1207" cy="171" r="5"   fill="white"/>
+    <circle cx="1200" cy="164" r="5"   fill="#F0F0F0"/>
+    <circle cx="1200" cy="178" r="5"   fill="white"/>
+    <circle cx="1200" cy="171" r="3.5" fill="#FFE135"/>
+
+    <!-- Mushrooms ground -->
+    <rect x="510" y="160" width="9"  height="12" fill="#F0DEB0"/>
+    <rect x="507" y="157" width="15" height="6"  fill="#F0DEB0"/>
+    <ellipse cx="514" cy="156" rx="18" ry="10" fill="#CC2200"/>
+    <ellipse cx="507" cy="152" rx="4.5" ry="3.5" fill="white"/>
+    <ellipse cx="519" cy="150" rx="3.5" ry="3"   fill="white"/>
+    <ellipse cx="526" cy="153" rx="3"   ry="2.5" fill="white"/>
+    <!-- Orange mushroom -->
+    <rect x="1110" y="162" width="8"  height="10" fill="#F0DEB0"/>
+    <rect x="1107" y="159" width="14" height="6"  fill="#F0DEB0"/>
+    <ellipse cx="1114" cy="158" rx="16" ry="9"  fill="#FF6600"/>
+    <ellipse cx="1108" cy="154" rx="4"  ry="3"  fill="white"/>
+    <ellipse cx="1118" cy="152" rx="3"  ry="2.5" fill="white"/>
+
+    <!-- Stars/sparkles in sky area -->
+    <rect x="60"   y="18" width="3" height="3" fill="#FFE135" opacity=".7"/>
+    <rect x="420"  y="12" width="2" height="2" fill="#FFE135" opacity=".6"/>
+    <rect x="840"  y="20" width="3" height="3" fill="#FFE135" opacity=".55"/>
+    <rect x="1120" y="10" width="2" height="2" fill="#FFE135" opacity=".7"/>
+    <rect x="1380" y="22" width="3" height="3" fill="#FFE135" opacity=".5"/>
+    <!-- Butterfly near mushroom house -->
+    <rect x="310" y="46" width="7" height="5" fill="#FF69B4" opacity=".8"/>
+    <rect x="307" y="43" width="4" height="7" fill="#FFB6C1" opacity=".7"/>
+  </svg>
+
+  <!-- Ocean -->
+  <div class="ocean-layer">
+    <div class="ocean-body"></div>
+    <div class="ocean-shimmer"></div>
+    <div class="wave-wrap" id="wave-wrap"></div>
+  </div>
+
+  <!-- Tropical Island -->
+  <div class="island-wrap">
+    <svg width="110" height="80" viewBox="0 0 55 40" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="8"  y="28" width="39" height="10" fill="#F0C840"/>
+      <rect x="14" y="24" width="27" height="6"  fill="#F0C840"/>
+      <rect x="18" y="20" width="19" height="6"  fill="#F0C840"/>
+      <rect x="16" y="17" width="23" height="5"  fill="#5DB030"/>
+      <rect x="20" y="14" width="15" height="5"  fill="#5DB030"/>
+      <rect x="26" y="2"  width="4"  height="15" fill="#8B5C00"/>
+      <rect x="6"  y="2"  width="20" height="4"  fill="#2E9018"/>
+      <rect x="4"  y="5"  width="6"  height="3"  fill="#3AAA20"/>
+      <rect x="30" y="0"  width="20" height="4"  fill="#2E9018"/>
+      <rect x="46" y="3"  width="5"  height="3"  fill="#3AAA20"/>
+      <rect x="27" y="6"  width="5"  height="5"  fill="#6B3A00"/>
+      <rect x="22" y="22" width="12" height="6"  fill="#C8A050"/>
+      <rect x="20" y="19" width="16" height="4"  fill="#CC4400"/>
+      <rect x="25" y="24" width="4"  height="4"  fill="#6B3A00"/>
+    </svg>
+  </div>
+
+  <!-- One Piece Ship -->
+  <div class="ship-wrap">
+    <svg width="200" height="120" viewBox="0 0 50 30" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="22" y="0"  width="3"  height="20" fill="#8B5C00"/>
+      <rect x="4"  y="1"  width="18" height="16" fill="#FFFFFF"/>
+      <rect x="4"  y="3"  width="18" height="3"  fill="#CC1111"/>
+      <rect x="4"  y="9"  width="18" height="3"  fill="#CC1111"/>
+      <rect x="4"  y="15" width="18" height="2"  fill="#CC1111"/>
+      <rect x="21" y="1"  width="1"  height="16" fill="#DDDDDD"/>
+      <rect x="25" y="1"  width="14" height="10" fill="#FFFFFF"/>
+      <rect x="25" y="3"  width="14" height="2"  fill="#CC1111"/>
+      <rect x="25" y="8"  width="14" height="2"  fill="#CC1111"/>
+      <rect x="25" y="0"  width="10" height="3"  fill="#CC1111"/>
+      <rect x="2"  y="19" width="46" height="7"  fill="#8B4400"/>
+      <rect x="0"  y="22" width="50" height="5"  fill="#6B3000"/>
+      <rect x="2"  y="20" width="46" height="2"  fill="#CC1111"/>
+      <rect x="7"  y="22" width="4"  height="4"  fill="#FFCC00"/>
+      <rect x="7"  y="22" width="1"  height="1"  fill="white"/>
+      <rect x="20" y="22" width="4"  height="4"  fill="#FFCC00"/>
+      <rect x="20" y="22" width="1"  height="1"  fill="white"/>
+      <rect x="33" y="22" width="4"  height="4"  fill="#FFCC00"/>
+      <rect x="33" y="22" width="1"  height="1"  fill="white"/>
+      <rect x="3"  y="17" width="2"  height="3"  fill="#C8A050"/>
+      <rect x="9"  y="17" width="2"  height="3"  fill="#C8A050"/>
+      <rect x="15" y="17" width="2"  height="3"  fill="#C8A050"/>
+      <rect x="21" y="17" width="2"  height="3"  fill="#C8A050"/>
+      <rect x="27" y="17" width="2"  height="3"  fill="#C8A050"/>
+      <rect x="33" y="17" width="2"  height="3"  fill="#C8A050"/>
+      <rect x="39" y="17" width="2"  height="3"  fill="#C8A050"/>
+      <rect x="45" y="17" width="2"  height="3"  fill="#C8A050"/>
+      <rect x="0"  y="23" width="4"  height="3"  fill="#8B4400"/>
+      <rect x="47" y="21" width="3"  height="4"  fill="#7A3800"/>
+      <rect x="1"  y="27" width="8"  height="2"  fill="white" opacity=".65"/>
+      <rect x="42" y="27" width="8"  height="2"  fill="white" opacity=".65"/>
+    </svg>
+  </div>
+
+  <!-- MapleStory Chibi Character (with One Piece straw hat) -->
+  <div class="char-wrap">
+    <div class="speech-bubble">⚓ さあ、冒険の始まりだ！</div>
+    <svg width="88" height="106" viewBox="0 0 16 20" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="-1" y="3"  width="18" height="2"  fill="#C8A020"/>
+      <rect x="4"  y="0"  width="8"  height="5"  fill="#DDB828"/>
+      <rect x="3"  y="1"  width="10" height="4"  fill="#DDB828"/>
+      <rect x="3"  y="4"  width="10" height="2"  fill="#CC1111"/>
+      <rect x="3"  y="5"  width="10" height="8"  fill="#FFCC80"/>
+      <rect x="3"  y="5"  width="10" height="2"  fill="#1A1000"/>
+      <rect x="2"  y="6"  width="2"  height="4"  fill="#1A1000"/>
+      <rect x="12" y="6"  width="2"  height="4"  fill="#1A1000"/>
+      <rect x="5"  y="7"  width="2"  height="3"  fill="#1A1000"/>
+      <rect x="9"  y="7"  width="2"  height="3"  fill="#1A1000"/>
+      <rect x="5"  y="7"  width="1"  height="1"  fill="white"/>
+      <rect x="9"  y="7"  width="1"  height="1"  fill="white"/>
+      <rect x="5"  y="8"  width="2"  height="1"  fill="#1E6ABF"/>
+      <rect x="9"  y="8"  width="2"  height="1"  fill="#1E6ABF"/>
+      <rect x="5"  y="11" width="6"  height="1"  fill="#CC3040"/>
+      <rect x="5"  y="12" width="1"  height="1"  fill="#CC3040"/>
+      <rect x="10" y="12" width="1"  height="1"  fill="#CC3040"/>
+      <rect x="3"  y="10" width="2"  height="2"  fill="#FFAAAA" opacity=".75"/>
+      <rect x="11" y="10" width="2"  height="2"  fill="#FFAAAA" opacity=".75"/>
+      <rect x="4"  y="13" width="8"  height="4"  fill="#1565C0"/>
+      <rect x="7"  y="13" width="2"  height="2"  fill="white"/>
+      <rect x="2"  y="13" width="2"  height="3"  fill="#FFCC80"/>
+      <rect x="12" y="13" width="2"  height="3"  fill="#FFCC80"/>
+      <rect x="1"  y="15" width="2"  height="2"  fill="#FFBB60"/>
+      <rect x="13" y="14" width="3"  height="2"  fill="#FFBB60"/>
+      <rect x="4"  y="17" width="8"  height="2"  fill="#5C3A00"/>
+      <rect x="7"  y="17" width="2"  height="2"  fill="#C8960C"/>
+      <rect x="4"  y="19" width="3"  height="1"  fill="#2D1A00"/>
+      <rect x="9"  y="19" width="3"  height="1"  fill="#2D1A00"/>
+    </svg>
+    <div class="char-shadow"></div>
+  </div>
+
+  <!-- TITLE PANEL -->
+  <div class="title-panel">
+    <div class="tp-hdr">
+      <span class="tp-hdr-lbl">★ ADVENTURE LOG ★</span>
+      <div class="win-dots">
+        <div class="win-dot" style="background:#FF5555"></div>
+        <div class="win-dot" style="background:#FFCC00"></div>
+        <div class="win-dot" style="background:#55CC55"></div>
+      </div>
+    </div>
+    <div class="tp-body">
+      <span class="panel-deco tl">🍁</span>
+      <span class="panel-deco tr">🍁</span>
+      <span class="panel-deco bl">⚓</span>
+      <span class="panel-deco br">⚓</span>
+      <div class="title-badge">★ WORLD TRAVELER ★</div>
+      <h1 class="title-main">So's<br><span class="red">Freedom</span><br>Adventure</h1>
+      <div class="gold-div"></div>
+      <p class="title-tag">⚓ 自由な大海原へ出航！<br>アプリで世界を冒険しよう ⚓</p>
+      <button class="ms-btn" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">▶ START ADVENTURE</button>
+    </div>
+  </div>
+
+  <button class="scroll-hint" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">
+    <span>▼ SCROLL ▼</span>
+  </button>
+</section>
+
+<!-- Nature divider -->
+<div class="nature-div">
+  <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <rect x="0" y="40" width="1440" height="40" fill="#3A8810"/>
+    <path d="M0 56 C120 28 240 62 360 46 C480 30 600 66 720 44 C840 22 960 60 1080 40 C1200 20 1320 56 1440 36 L1440 80 L0 80 Z" fill="#5AA828"/>
+    <path d="M0 64 C120 40 240 68 360 56 C480 44 600 72 720 56 C840 40 960 68 1080 54 C1200 40 1320 64 1440 50 L1440 80 L0 80 Z" fill="#6CBF38" opacity=".65"/>
+    <!-- Divider mushrooms -->
+    <rect x="108" y="56" width="8" height="10" fill="#F0DEB0"/>
+    <ellipse cx="112" cy="55" rx="15" ry="9" fill="#CC2200"/>
+    <ellipse cx="105" cy="51" rx="4" ry="3" fill="white"/>
+    <ellipse cx="116" cy="49" rx="3" ry="2.5" fill="white"/>
+    <rect x="510" y="58" width="7" height="9" fill="#F0DEB0"/>
+    <ellipse cx="513" cy="57" rx="13" ry="8" fill="#FF6600"/>
+    <ellipse cx="507" cy="53" rx="3" ry="2.5" fill="white"/>
+    <ellipse cx="517" cy="51" rx="2.5" ry="2" fill="white"/>
+    <!-- Divider flowers -->
+    <circle cx="290" cy="62" r="5"   fill="#FF69B4"/>
+    <circle cx="284" cy="62" r="4.5" fill="#FF8DC0"/>
+    <circle cx="296" cy="62" r="4.5" fill="#FF4AA0"/>
+    <circle cx="290" cy="56" r="4.5" fill="#FF8DC0"/>
+    <circle cx="290" cy="68" r="4.5" fill="#FF69B4"/>
+    <circle cx="290" cy="62" r="3.5" fill="#FFE135"/>
+    <circle cx="850" cy="63" r="5"   fill="#FFE135"/>
+    <circle cx="844" cy="63" r="4.5" fill="#FFD020"/>
+    <circle cx="856" cy="63" r="4.5" fill="#FFE135"/>
+    <circle cx="850" cy="57" r="4.5" fill="#FFD020"/>
+    <circle cx="850" cy="69" r="4.5" fill="#FFE135"/>
+    <circle cx="850" cy="63" r="3.5" fill="#FF8800"/>
+    <!-- Stars -->
+    <rect x="200" y="42" width="4" height="4" fill="#FFE135" opacity=".75"/>
+    <rect x="640" y="36" width="3" height="3" fill="#FFE135" opacity=".65"/>
+    <rect x="1100" y="40" width="4" height="4" fill="#FFE135" opacity=".7"/>
+  </svg>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN
+══════════════════════════════════════════ -->
+<main id="main">
+
+  <!-- Character Info -->
+  <div class="section">
+    <div class="quest-hdr">
+      <div class="quest-ico">📜</div>
+      <span class="quest-lbl">CHARACTER INFO</span>
+      <div class="quest-line"></div>
+    </div>
+    <div class="profile-panel">
+      <div class="ms-ph">
+        <span>👤</span>
+        <span class="ms-ph-title">CHARACTER STATUS</span>
+        <div class="ms-close">✕</div>
+      </div>
+      <div class="profile-body">
+        <div class="avatar-col">
+          <div class="avatar-frame">
+            <svg width="76" height="90" viewBox="0 0 16 20" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <rect x="-1" y="3"  width="18" height="2"  fill="#C8A020"/>
+              <rect x="4"  y="0"  width="8"  height="5"  fill="#DDB828"/>
+              <rect x="3"  y="1"  width="10" height="4"  fill="#DDB828"/>
+              <rect x="3"  y="4"  width="10" height="2"  fill="#CC1111"/>
+              <rect x="3"  y="5"  width="10" height="8"  fill="#FFCC80"/>
+              <rect x="3"  y="5"  width="10" height="2"  fill="#1A1000"/>
+              <rect x="2"  y="6"  width="2"  height="4"  fill="#1A1000"/>
+              <rect x="12" y="6"  width="2"  height="4"  fill="#1A1000"/>
+              <rect x="5"  y="7"  width="2"  height="3"  fill="#1A1000"/>
+              <rect x="9"  y="7"  width="2"  height="3"  fill="#1A1000"/>
+              <rect x="5"  y="7"  width="1"  height="1"  fill="white"/>
+              <rect x="9"  y="7"  width="1"  height="1"  fill="white"/>
+              <rect x="5"  y="8"  width="2"  height="1"  fill="#1E6ABF"/>
+              <rect x="9"  y="8"  width="2"  height="1"  fill="#1E6ABF"/>
+              <rect x="5"  y="11" width="6"  height="1"  fill="#CC3040"/>
+              <rect x="5"  y="12" width="1"  height="1"  fill="#CC3040"/>
+              <rect x="10" y="12" width="1"  height="1"  fill="#CC3040"/>
+              <rect x="3"  y="10" width="2"  height="2"  fill="#FFAAAA" opacity=".75"/>
+              <rect x="11" y="10" width="2"  height="2"  fill="#FFAAAA" opacity=".75"/>
+              <rect x="4"  y="13" width="8"  height="4"  fill="#1565C0"/>
+              <rect x="7"  y="13" width="2"  height="2"  fill="white"/>
+              <rect x="2"  y="13" width="2"  height="3"  fill="#FFCC80"/>
+              <rect x="12" y="13" width="2"  height="3"  fill="#FFCC80"/>
+              <rect x="1"  y="15" width="2"  height="2"  fill="#FFBB60"/>
+              <rect x="13" y="14" width="3"  height="2"  fill="#FFBB60"/>
+              <rect x="4"  y="17" width="8"  height="2"  fill="#5C3A00"/>
+              <rect x="7"  y="17" width="2"  height="2"  fill="#C8960C"/>
+              <rect x="4"  y="19" width="3"  height="1"  fill="#2D1A00"/>
+              <rect x="9"  y="19" width="3"  height="1"  fill="#2D1A00"/>
+            </svg>
+          </div>
+          <div class="lv-chip">Lv. MAX</div>
+          <div class="job-chip">ADVENTURER</div>
+        </div>
+        <div class="stats-col">
+          <div class="char-name">So ⚓</div>
+          <p class="char-desc">自由な発想と好奇心を武器に、<br>アプリという大海を航海する船長。<br>作るものすべてに心を込めて。</p>
+          <div class="stat-bars">
+            <div class="stat-row">
+              <span class="stat-key" style="color:#CC3300">HP</span>
+              <div class="stat-track"><div class="stat-fill hp"></div></div>
+              <span class="stat-val">820/999</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-key" style="color:#2266CC">MP</span>
+              <div class="stat-track"><div class="stat-fill mp"></div></div>
+              <span class="stat-val">648/999</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-key" style="color:#AA8800">EXP</span>
+              <div class="stat-track"><div class="stat-fill xp"></div></div>
+              <span class="stat-val">44%</span>
+            </div>
+          </div>
+          <div class="skills-row">
+            <div class="skill-slot">💻<span class="tip">App Dev</span></div>
+            <div class="skill-slot">🎨<span class="tip">Design</span></div>
+            <div class="skill-slot">⚔️<span class="tip">Problem Solve</span></div>
+            <div class="skill-slot">🧭<span class="tip">Navigation</span></div>
+            <div class="skill-slot">🔍<span class="tip">Curiosity</span></div>
+            <div class="skill-slot">⚓<span class="tip">Freedom</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adventure Map -->
+  <div class="section" style="padding-top:0">
+    <div class="quest-hdr">
+      <div class="quest-ico">🗺️</div>
+      <span class="quest-lbl">ADVENTURE MAP</span>
+      <div class="quest-line"></div>
+    </div>
+    <div class="apps-grid" id="apps-grid">
+      <!--
+        ▼▼▼ アプリ追加はここに ▼▼▼
+        <a href="URL" class="app-card" target="_blank">
+          <div class="ac-hdr">
+            <div class="ac-ico">🗡️</div>
+            <div class="ac-meta">
+              <div class="ac-name">APP NAME</div>
+              <span class="ac-tag">React / TypeScript</span>
+            </div>
+          </div>
+          <div class="ac-body">
+            <p class="ac-desc">説明文</p>
+            <span class="ac-btn">▶ EXPLORE</span>
+          </div>
+        </a>
+      -->
+      <div class="app-card app-card--soon">
+        <div class="ac-hdr">
+          <div class="ac-ico">🗺️</div>
+          <div class="ac-meta"><div class="ac-name">ISLAND #1</div><span class="ac-tag">Coming Soon</span></div>
+        </div>
+        <div class="ac-body">
+          <p class="ac-desc">次の冒険地がここに現れる。<br>乞うご期待！</p>
+          <span class="locked-tag">🔒 LOCKED</span>
+        </div>
+      </div>
+      <div class="app-card app-card--soon">
+        <div class="ac-hdr">
+          <div class="ac-ico">⚓</div>
+          <div class="ac-meta"><div class="ac-name">ISLAND #2</div><span class="ac-tag">Coming Soon</span></div>
+        </div>
+        <div class="ac-body">
+          <p class="ac-desc">港を出航した先にある島。<br>開発中…</p>
+          <span class="locked-tag">🔒 LOCKED</span>
+        </div>
+      </div>
+      <div class="app-card app-card--soon">
+        <div class="ac-hdr">
+          <div class="ac-ico">🌴</div>
+          <div class="ac-meta"><div class="ac-name">ISLAND #3</div><span class="ac-tag">Coming Soon</span></div>
+        </div>
+        <div class="ac-body">
+          <p class="ac-desc">自然豊かな未知の大地。<br>準備中…</p>
+          <span class="locked-tag">🔒 LOCKED</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer>
+  <div class="ft-emb">
+    <svg width="64" height="40" viewBox="0 0 32 20" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="14" y="0"  width="2"  height="12" fill="#C8A050"/>
+      <rect x="4"  y="1"  width="10" height="9"  fill="#2A4A8A"/>
+      <rect x="16" y="1"  width="8"  height="6"  fill="#2A4A8A"/>
+      <rect x="2"  y="12" width="28" height="5"  fill="#5C3000"/>
+      <rect x="0"  y="15" width="32" height="3"  fill="#3A1800"/>
+      <rect x="5"  y="13" width="3"  height="3"  fill="#FFCC00" opacity=".8"/>
+      <rect x="14" y="13" width="3"  height="3"  fill="#FFCC00" opacity=".8"/>
+      <rect x="23" y="13" width="3"  height="3"  fill="#FFCC00" opacity=".8"/>
+    </svg>
+  </div>
+  <div class="ft-title">⚓ So's Freedom Adventure ⚓</div>
+  <div class="ft-tag">Sail free. Build freely. 自由に帆を張れ。</div>
+  <div class="ft-copy">© 2026 So — All rights reserved</div>
+</footer>
+
+<!-- ================================================================
+     SCRIPTS
+================================================================ -->
+<script>
+// Sun rays
+(function(){
+  const w = document.getElementById('sun-rays');
+  for(let i=0;i<12;i++){
+    const r=document.createElement('div');
+    r.className='sun-ray';
+    r.style.transform=`rotate(${i*30}deg) translateY(-55px)`;
+    w.appendChild(r);
+  }
+})();
+
+// Clouds
+(function(){
+  const c=document.getElementById('clouds-container');
+  [{w:100,h:28,top:'7%',dur:32,del:0},
+   {w:136,h:38,top:'14%',dur:45,del:-15},
+   {w:76,h:22,top:'5%',dur:28,del:-22},
+   {w:112,h:32,top:'20%',dur:38,del:-8},
+   {w:90,h:26,top:'10%',dur:35,del:-30}
+  ].forEach(d=>{
+    const wrap=document.createElement('div');
+    wrap.className='cloud-el';
+    wrap.style.cssText=`top:${d.top};animation-duration:${d.dur}s;animation-delay:${d.del}s`;
+    const body=document.createElement('div');
+    body.className='cloud-body';
+    body.style.cssText=`width:${d.w}px;height:${d.h}px`;
+    [[.22,d.w*.47,d.h*1.4,-d.h*.65],[.54,d.w*.35,d.h*1.22,-d.h*.52]].forEach(([l,bw,bh,t])=>{
+      const b=document.createElement('div');
+      b.className='cloud-bump';
+      b.style.cssText=`width:${bw}px;height:${bh}px;left:${d.w*l}px;top:${t}px`;
+      body.appendChild(b);
+    });
+    wrap.appendChild(body);
+    c.appendChild(wrap);
+  });
+})();
+
+// Waves
+document.getElementById('wave-wrap').innerHTML=`
+  <svg class="wave-path" style="animation-duration:7s" viewBox="0 0 2880 50"
+       xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M0 25 C240 8 480 42 720 25 C960 8 1200 42 1440 25 C1680 8 1920 42 2160 25 C2400 8 2640 42 2880 25 L2880 50 L0 50 Z"
+          fill="rgba(120,210,255,.45)"/>
+    <path d="M0 32 C240 50 480 14 720 32 C960 50 1200 14 1440 32 C1680 50 1920 14 2160 32 C2400 50 2640 14 2880 32 L2880 50 L0 50 Z"
+          fill="rgba(255,255,255,.18)"/>
+  </svg>
+  <svg class="wave-path back" style="animation-duration:11s" viewBox="0 0 2880 50"
+       xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M0 20 C240 38 480 4 720 20 C960 38 1200 4 1440 20 C1680 38 1920 4 2160 20 C2400 38 2640 4 2880 20 L2880 50 L0 50 Z"
+          fill="rgba(20,80,180,.38)"/>
+  </svg>`;
+
+// Parallax on scroll
+(function(){
+  const layers=document.querySelectorAll('.parallax');
+  window.addEventListener('scroll',()=>{
+    const sy=window.scrollY;
+    layers.forEach(el=>{
+      const speed=parseFloat(el.dataset.speed)||0.3;
+      el.style.transform=`translateY(${sy*speed}px)`;
+    });
+  },{passive:true});
+})();
+
+// Click sparkles (MapleStory loot drop!)
+const sparkC=['#FFE135','#FF69B4','#88DDFF','#AAFFAA','#FF9900','#CC11FF','#FFFFFF'];
+document.addEventListener('click',e=>{
+  for(let i=0;i<9;i++){
+    const s=document.createElement('div');
+    s.className='sparkle-dot';
+    const sz=4+Math.random()*8;
+    const a=(Math.random()*360)*Math.PI/180;
+    const dist=18+Math.random()*36;
+    const col=sparkC[Math.floor(Math.random()*sparkC.length)];
+    s.style.cssText=`
+      left:${e.clientX+Math.cos(a)*dist}px;
+      top:${e.clientY+Math.sin(a)*dist}px;
+      width:${sz}px;height:${sz}px;
+      background:${col};
+      box-shadow:0 0 ${sz*1.5}px ${col};
+      animation-duration:${.3+Math.random()*.5}s;
+    `;
+    document.body.appendChild(s);
+    s.addEventListener('animationend',()=>s.remove());
+  }
+});
+
+// Floating leaves / stars in hero
+(function(){
+  const hero=document.getElementById('hero');
+  const items=['🍁','🍀','⭐','🌸','✨','🌟','🍂'];
+  setInterval(()=>{
+    const el=document.createElement('div');
+    el.className='float-leaf';
+    el.textContent=items[Math.floor(Math.random()*items.length)];
+    const dur=3.5+Math.random()*3.5;
+    el.style.cssText=`
+      left:${5+Math.random()*88}%;
+      bottom:${12+Math.random()*55}%;
+      font-size:${10+Math.random()*14}px;
+      animation-duration:${dur}s;
+    `;
+    hero.appendChild(el);
+    setTimeout(()=>el.remove(),dur*1000+300);
+  },800);
+})();
+</script>
+
+</body>
+</html>
