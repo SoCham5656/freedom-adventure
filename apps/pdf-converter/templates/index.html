@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Converter ⚓ Freedom Adventure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --panel-bg:     #FFFDE7;
+      --panel-bg2:    #FFF4C0;
+      --panel-border: #5C3310;
+      --panel-gold:   #C8960C;
+      --panel-shine:  #FFE866;
+      --hdr-top:      #6BAAE8;
+      --hdr-bot:      #0E3FA8;
+      --hdr-line:     #0A2888;
+      --btn-a: #FFE566; --btn-b: #FF8800; --btn-sh: #5C3800;
+      --gold:  #FFB800;
+      --dark:  #2D1600;
+      --navy:  #1A237E;
+      --px: 'Press Start 2P', monospace;
+      --rn: 'M PLUS Rounded 1c', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--rn);
+      background: linear-gradient(180deg, #0A2855 0%, #061830 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    /* ---- HEADER ---- */
+    header {
+      background: linear-gradient(180deg, var(--hdr-top) 0%, #3A78D0 50%, var(--hdr-bot) 100%);
+      border-bottom: 4px solid var(--hdr-line);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    }
+    .hdr-ico { font-size: 26px; }
+    .hdr-title {
+      font-family: var(--px);
+      font-size: clamp(9px, 2.2vw, 14px);
+      color: #fff;
+      text-shadow: 2px 2px 0 rgba(0,0,0,.4);
+      line-height: 1.8;
+    }
+    .hdr-sub {
+      font-family: var(--rn);
+      font-size: 12px;
+      color: rgba(255,255,255,.75);
+      font-weight: 700;
+    }
+    .back-btn {
+      margin-left: auto;
+      font-family: var(--px);
+      font-size: 8px;
+      color: #3A1400;
+      background: linear-gradient(180deg, var(--btn-a) 0%, #FFCC00 45%, var(--btn-b) 100%);
+      border: 3px solid #7A4A00;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 4px 0 var(--btn-sh);
+      transition: transform .1s, box-shadow .1s;
+      white-space: nowrap;
+    }
+    .back-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--btn-sh); }
+    .back-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--btn-sh); }
+
+    /* ---- MAIN CONTENT ---- */
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 22px 64px;
+    }
+
+    /* ---- PANEL ---- */
+    .panel {
+      background: linear-gradient(160deg, #FFFEF8, var(--panel-bg2));
+      border: 4px solid var(--panel-border);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow:
+        inset 0 0 0 3px var(--panel-shine),
+        0 16px 48px rgba(0,0,0,.55);
+    }
+    .panel-hdr {
+      background: linear-gradient(180deg, var(--hdr-top) 0%, #3A78D0 50%, var(--hdr-bot) 100%);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 3px solid var(--hdr-line);
+    }
+    .panel-hdr-lbl {
+      font-family: var(--px);
+      font-size: 9px;
+      color: #fff;
+      text-shadow: 1px 1px 0 #000;
+    }
+    .panel-body { padding: 28px 32px; }
+
+    /* ---- DROP ZONE ---- */
+    .drop-zone {
+      border: 4px dashed var(--panel-gold);
+      border-radius: 14px;
+      background: rgba(255, 230, 100, .07);
+      padding: 44px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+      position: relative;
+    }
+    .drop-zone.drag-over {
+      background: rgba(255, 230, 100, .20);
+      border-color: var(--panel-shine);
+    }
+    .drop-ico { font-size: 48px; margin-bottom: 14px; display: block; }
+    .drop-title {
+      font-family: var(--px);
+      font-size: 11px;
+      color: var(--dark);
+      margin-bottom: 10px;
+      line-height: 2;
+    }
+    .drop-sub {
+      font-family: var(--rn);
+      font-size: 13px;
+      color: #7A5A00;
+      font-weight: 700;
+    }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ---- GOLD DIVIDER ---- */
+    .gold-div {
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--panel-gold), var(--panel-shine), var(--panel-gold), transparent);
+      margin: 22px 0;
+      border-radius: 2px;
+    }
+
+    /* ---- FILE LIST ---- */
+    .file-list { display: flex; flex-direction: column; gap: 10px; }
+    .file-item {
+      background: rgba(255,245,200,.55);
+      border: 2px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--rn);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+    .file-ico { font-size: 22px; flex-shrink: 0; }
+    .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-status {
+      font-family: var(--px);
+      font-size: 8px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .status-wait   { background: #ccc; color: #333; }
+    .status-busy   { background: #3A78D0; color: #fff; animation: pulse .8s ease-in-out infinite; }
+    .status-done   { background: #3a9e3a; color: #fff; }
+    .status-error  { background: #c0392b; color: #fff; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+    .dl-btn {
+      font-family: var(--px);
+      font-size: 7px;
+      color: #3A1400;
+      background: linear-gradient(180deg, var(--btn-a) 0%, #FFCC00 45%, var(--btn-b) 100%);
+      border: 2px solid #7A4A00;
+      border-radius: 7px;
+      padding: 6px 12px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 3px 0 var(--btn-sh);
+      transition: transform .1s, box-shadow .1s;
+      flex-shrink: 0;
+    }
+    .dl-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--btn-sh); }
+
+    /* ---- CONVERT BUTTON ---- */
+    .convert-wrap { text-align: center; margin-top: 24px; }
+    .convert-btn {
+      font-family: var(--px);
+      font-size: 11px;
+      color: #3A1400;
+      background: linear-gradient(180deg, var(--btn-a) 0%, #FFCC00 45%, var(--btn-b) 100%);
+      border: 3px solid #7A4A00;
+      border-radius: 12px;
+      padding: 16px 40px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 var(--btn-sh), 0 10px 20px rgba(0,0,0,.3);
+      text-shadow: 0 1px 0 rgba(255,255,255,.5);
+      transition: transform .1s, box-shadow .1s;
+    }
+    .convert-btn:hover { transform: translateY(-3px); box-shadow: 0 9px 0 var(--btn-sh), 0 14px 22px rgba(0,0,0,.25); }
+    .convert-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--btn-sh); }
+    .convert-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 3px 0 var(--btn-sh);
+    }
+
+    /* ---- EMPTY STATE ---- */
+    .empty-msg {
+      text-align: center;
+      font-family: var(--rn);
+      font-size: 13px;
+      color: #8B6B00;
+      font-weight: 700;
+      padding: 12px 0;
+    }
+
+    /* ---- CLEAR BTN ---- */
+    .clear-btn {
+      background: none;
+      border: 2px solid #c0392b;
+      border-radius: 7px;
+      color: #c0392b;
+      font-family: var(--px);
+      font-size: 7px;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .clear-btn:hover { background: rgba(192,57,43,.12); }
+
+    .list-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .list-lbl {
+      font-family: var(--px);
+      font-size: 8px;
+      color: var(--dark);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="hdr-ico">📄</span>
+  <div>
+    <div class="hdr-title">PDF CONVERTER</div>
+    <div class="hdr-sub">Office ファイルを一括 PDF 変換</div>
+  </div>
+  <a href="../../index.html" class="back-btn">⚓ HOME</a>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="panel-hdr">
+      <span style="font-size:16px">🗡️</span>
+      <span class="panel-hdr-lbl">DRAG &amp; DROP ZONE</span>
+    </div>
+    <div class="panel-body">
+
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" multiple
+          accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx" />
+        <span class="drop-ico">📂</span>
+        <div class="drop-title">ここにファイルをドロップ</div>
+        <div class="drop-sub">Word / Excel / PowerPoint に対応<br>複数ファイル同時対応 ✨</div>
+      </div>
+
+      <div class="gold-div"></div>
+
+      <!-- File List -->
+      <div class="list-actions">
+        <span class="list-lbl">📋 QUEUE</span>
+        <button class="clear-btn" id="clearBtn" style="display:none">✕ クリア</button>
+      </div>
+
+      <div class="file-list" id="fileList">
+        <div class="empty-msg" id="emptyMsg">ファイルを追加してください 🏴‍☠️</div>
+      </div>
+
+      <!-- Convert Button -->
+      <div class="convert-wrap">
+        <button class="convert-btn" id="convertBtn" disabled>
+          ▶ PDF に変換する
+        </button>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+  const dropZone   = document.getElementById('dropZone');
+  const fileInput  = document.getElementById('fileInput');
+  const fileList   = document.getElementById('fileList');
+  const emptyMsg   = document.getElementById('emptyMsg');
+  const convertBtn = document.getElementById('convertBtn');
+  const clearBtn   = document.getElementById('clearBtn');
+
+  const ALLOWED = ['.doc','.docx','.xls','.xlsx','.ppt','.pptx'];
+  const EXT_ICO = {
+    '.doc':'📝','.docx':'📝',
+    '.xls':'📊','.xlsx':'📊',
+    '.ppt':'📊','.pptx':'📊',
+  };
+
+  let queue = []; // { file, id, status, blobUrl, pdfName }
+
+  // ---- Drag & Drop ----
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    addFiles([...e.dataTransfer.files]);
+  });
+  fileInput.addEventListener('change', () => {
+    addFiles([...fileInput.files]);
+    fileInput.value = '';
+  });
+
+  clearBtn.addEventListener('click', () => {
+    queue = [];
+    render();
+  });
+
+  function ext(name) { return name.slice(name.lastIndexOf('.')).toLowerCase(); }
+
+  function addFiles(files) {
+    files.forEach(f => {
+      if (!ALLOWED.includes(ext(f.name))) return;
+      // 重複チェック
+      if (queue.find(q => q.file.name === f.name && q.file.size === f.size)) return;
+      queue.push({ file: f, id: Date.now() + Math.random(), status: 'wait', blobUrl: null, pdfName: null });
+    });
+    render();
+  }
+
+  function render() {
+    fileList.innerHTML = '';
+    if (queue.length === 0) {
+      fileList.appendChild(emptyMsg);
+      convertBtn.disabled = true;
+      clearBtn.style.display = 'none';
+      return;
+    }
+    clearBtn.style.display = '';
+    const pending = queue.filter(q => q.status === 'wait').length;
+    convertBtn.disabled = pending === 0;
+
+    queue.forEach(item => {
+      const e = ext(item.file.name);
+      const ico = EXT_ICO[e] || '📄';
+
+      let statusEl = '';
+      if (item.status === 'wait')  statusEl = `<span class="file-status status-wait">待機中</span>`;
+      if (item.status === 'busy')  statusEl = `<span class="file-status status-busy">変換中…</span>`;
+      if (item.status === 'done')  statusEl = `<span class="file-status status-done">✓ 完了</span>`;
+      if (item.status === 'error') statusEl = `<span class="file-status status-error">✕ エラー</span>`;
+
+      let dlEl = '';
+      if (item.status === 'done' && item.blobUrl) {
+        dlEl = `<a class="dl-btn" href="${item.blobUrl}" download="${item.pdfName}">💾 DL</a>`;
+      }
+
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.innerHTML = `
+        <span class="file-ico">${ico}</span>
+        <span class="file-name" title="${item.file.name}">${item.file.name}</span>
+        ${statusEl}
+        ${dlEl}
+      `;
+      fileList.appendChild(div);
+    });
+  }
+
+  // ---- Convert ----
+  convertBtn.addEventListener('click', async () => {
+    convertBtn.disabled = true;
+    const pending = queue.filter(q => q.status === 'wait');
+    for (const item of pending) {
+      item.status = 'busy';
+      render();
+      try {
+        const fd = new FormData();
+        fd.append('file', item.file);
+        const res = await fetch('/convert', { method: 'POST', body: fd });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'サーバーエラー' }));
+          throw new Error(err.error || 'エラー');
+        }
+        const blob = await res.blob();
+        item.blobUrl = URL.createObjectURL(blob);
+        item.pdfName = item.file.name.replace(/\.[^.]+$/, '.pdf');
+        item.status = 'done';
+      } catch (e) {
+        item.status = 'error';
+        console.error(e);
+      }
+      render();
+    }
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
