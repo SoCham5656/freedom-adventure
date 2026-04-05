@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>校正エージェント ⚙️ Freedom Adventure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --sky:    #020810;
+      --bldg:   #07111E;
+      --bldg2:  #040C18;
+      --fire1:  #FF6A00;
+      --fire2:  #FFAA00;
+      --win:    #FF9D30;
+      --panel-bg:   #060D1C;
+      --panel-bd:   #FF7A00;
+      --panel-glow: rgba(255,122,0,.18);
+      --amber:  #FFAA40;
+      --cream:  #FFE8C0;
+      --dim:    #886644;
+      --cyan:   #00D4FF;
+      --red3:   #FF4444;
+      --gold:   #FFD060;
+      --px: 'Press Start 2P', monospace;
+      --rn: 'M PLUS Rounded 1c', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--rn);
+      background: var(--sky);
+      min-height: 100vh;
+      color: var(--cream);
+      overflow-x: hidden;
+    }
+
+    /* ============================================================
+       FACTORY BACKGROUND
+    ============================================================ */
+    .factory-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .sky-gradient {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 60% 30%,
+        rgba(255,100,0,.06) 0%, transparent 60%),
+        linear-gradient(180deg,
+          #010508 0%,
+          #020912 20%,
+          #030D1A 45%,
+          #040A10 70%,
+          #020508 100%);
+    }
+
+    /* Stars */
+    .stars {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
+      opacity: var(--op, .6);
+    }
+    @keyframes twinkle {
+      0%,100% { opacity: var(--op, .6); transform: scale(1); }
+      50%      { opacity: .15;          transform: scale(.6); }
+    }
+
+    /* Factory SVG */
+    .factory-svg {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 75%;
+      pointer-events: none;
+    }
+
+    /* Ground / water */
+    .factory-ground {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 18%;
+      background: linear-gradient(180deg, #020508 0%, #010305 100%);
+    }
+    /* Water shimmer lines */
+    .water-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,120,0,.18) 20%,
+        rgba(255,160,0,.35) 50%,
+        rgba(255,120,0,.18) 80%,
+        transparent 100%);
+      animation: waterShimmer 4s ease-in-out infinite;
+    }
+    @keyframes waterShimmer {
+      0%,100% { opacity: .4; transform: scaleX(1); }
+      50%      { opacity: .8; transform: scaleX(.96); }
+    }
+
+    /* Smoke */
+    .smoke {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(160,160,140,.22);
+      animation: smokeRise var(--sd, 6s) ease-out infinite var(--ss, 0s);
+      pointer-events: none;
+    }
+    @keyframes smokeRise {
+      0%   { transform: translate(0,0) scale(.5);  opacity: .35; }
+      60%  { opacity: .2; }
+      100% { transform: translate(var(--sx,10px), -120px) scale(2.2); opacity: 0; }
+    }
+
+    /* Chimney glow flicker */
+    .flame-glow {
+      animation: flicker 1.8s ease-in-out infinite;
+    }
+    @keyframes flicker {
+      0%,100% { opacity: 1;   r: 14; }
+      30%     { opacity: .7;  r: 11; }
+      60%     { opacity: .9;  r: 16; }
+    }
+
+    /* ============================================================
+       HEADER
+    ============================================================ */
+    header {
+      position: relative;
+      z-index: 10;
+      background: rgba(4, 8, 18, .88);
+      border-bottom: 3px solid var(--panel-bd);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 20px rgba(255,120,0,.25);
+      backdrop-filter: blur(6px);
+    }
+    .hdr-ico { font-size: 24px; }
+    .hdr-title {
+      font-family: var(--px);
+      font-size: clamp(7px, 2vw, 12px);
+      color: var(--amber);
+      text-shadow: 0 0 12px rgba(255,160,0,.6);
+      line-height: 1.9;
+    }
+    .hdr-sub {
+      font-size: 12px;
+      color: var(--dim);
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .back-btn {
+      margin-left: auto;
+      font-family: var(--px);
+      font-size: 8px;
+      color: #FF6A00;
+      background: rgba(255,106,0,.08);
+      border: 2px solid #FF6A00;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 0 10px rgba(255,106,0,.3);
+      transition: box-shadow .2s, background .2s;
+      white-space: nowrap;
+    }
+    .back-btn:hover {
+      background: rgba(255,106,0,.18);
+      box-shadow: 0 0 18px rgba(255,106,0,.5);
+    }
+
+    /* ============================================================
+       COMPANION CARD
+    ============================================================ */
+    .companion-wrap {
+      position: relative;
+      z-index: 10;
+      max-width: 760px;
+      margin: 28px auto 0;
+      padding: 0 22px;
+    }
+    .companion-card {
+      background: rgba(6,10,24,.85);
+      border: 2px solid var(--panel-bd);
+      border-radius: 14px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 24px rgba(255,122,0,.2), inset 0 0 0 1px rgba(255,122,0,.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .companion-card::before {
+      content: '';
+      position: absolute;
+      top: -1px; left: 16px;
+      background: var(--panel-bd);
+      padding: 3px 10px;
+      font-family: var(--px);
+      font-size: 7px;
+      color: #000;
+      border-radius: 0 0 6px 6px;
+    }
+    .companion-badge {
+      position: absolute;
+      top: -1px; left: 16px;
+      background: var(--panel-bd);
+      padding: 3px 10px;
+      font-family: var(--px);
+      font-size: 7px;
+      color: #000;
+      border-radius: 0 0 6px 6px;
+    }
+    .companion-ico {
+      font-size: 36px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 8px rgba(255,180,0,.7));
+    }
+    .companion-body { flex: 1; }
+    .companion-name {
+      font-family: var(--px);
+      font-size: 10px;
+      color: var(--amber);
+      text-shadow: 0 0 8px rgba(255,170,0,.6);
+      margin-bottom: 6px;
+    }
+    .companion-quote {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cream);
+      font-style: italic;
+      margin-bottom: 6px;
+    }
+    .companion-abilities {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .ability-tag {
+      font-family: var(--px);
+      font-size: 6px;
+      color: var(--cyan);
+      border: 1px solid var(--cyan);
+      border-radius: 4px;
+      padding: 3px 8px;
+      background: rgba(0,212,255,.06);
+    }
+    .companion-location {
+      font-size: 11px;
+      color: var(--dim);
+      font-weight: 700;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    /* ============================================================
+       MAIN CONTENT
+    ============================================================ */
+    main {
+      position: relative;
+      z-index: 10;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 24px 22px 80px;
+    }
+
+    /* ============================================================
+       PANEL
+    ============================================================ */
+    .panel {
+      background: rgba(6,10,24,.9);
+      border: 3px solid var(--panel-bd);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow:
+        0 0 32px rgba(255,122,0,.2),
+        inset 0 0 0 1px rgba(255,122,0,.06);
+      backdrop-filter: blur(10px);
+      margin-top: 20px;
+    }
+    .panel-hdr {
+      background: rgba(255,106,0,.08);
+      border-bottom: 2px solid var(--panel-bd);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-hdr-lbl {
+      font-family: var(--px);
+      font-size: 9px;
+      color: var(--amber);
+      text-shadow: 0 0 8px rgba(255,160,0,.5);
+    }
+    .panel-body { padding: 24px 28px; }
+
+    /* ============================================================
+       API KEY SECTION
+    ============================================================ */
+    .apikey-section {
+      margin-bottom: 20px;
+    }
+    .apikey-label {
+      font-family: var(--px);
+      font-size: 8px;
+      color: var(--amber);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .apikey-note {
+      font-size: 11px;
+      color: var(--dim);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .apikey-row {
+      display: flex;
+      gap: 8px;
+    }
+    .apikey-input {
+      flex: 1;
+      background: rgba(255,255,255,.04);
+      border: 2px solid rgba(255,122,0,.4);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--cream);
+      font-family: var(--rn);
+      font-size: 13px;
+      font-weight: 700;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .apikey-input:focus {
+      border-color: var(--panel-bd);
+      box-shadow: 0 0 10px rgba(255,122,0,.25);
+    }
+    .apikey-input::placeholder { color: rgba(255,232,192,.3); }
+    .save-key-btn {
+      font-family: var(--px);
+      font-size: 7px;
+      color: var(--sky);
+      background: linear-gradient(180deg, #FF9A00 0%, #FF6A00 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #8B3000, 0 0 12px rgba(255,106,0,.3);
+      transition: transform .1s, box-shadow .1s;
+      white-space: nowrap;
+    }
+    .save-key-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 #8B3000, 0 0 18px rgba(255,106,0,.4); }
+    .save-key-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #8B3000; }
+    .key-status {
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .key-ok  { color: #4CFF80; }
+    .key-err { color: var(--red3); }
+
+    /* ============================================================
+       AMBER DIVIDER
+    ============================================================ */
+    .amber-div {
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--panel-bd), rgba(255,200,0,.8), var(--panel-bd), transparent);
+      margin: 20px 0;
+      border-radius: 2px;
+    }
+
+    /* ============================================================
+       DROP ZONE
+    ============================================================ */
+    .drop-zone {
+      border: 3px dashed rgba(255,122,0,.5);
+      border-radius: 14px;
+      background: rgba(255,106,0,.04);
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: background .2s, border-color .2s, box-shadow .2s;
+      position: relative;
+    }
+    .drop-zone.drag-over {
+      background: rgba(255,106,0,.12);
+      border-color: var(--fire2);
+      box-shadow: 0 0 20px rgba(255,160,0,.3);
+    }
+    .drop-ico { font-size: 44px; margin-bottom: 12px; display: block; filter: drop-shadow(0 0 10px rgba(255,160,0,.6)); }
+    .drop-title {
+      font-family: var(--px);
+      font-size: 10px;
+      color: var(--amber);
+      line-height: 2.2;
+      margin-bottom: 8px;
+      text-shadow: 0 0 6px rgba(255,160,0,.4);
+    }
+    .drop-sub {
+      font-size: 13px;
+      color: var(--dim);
+      font-weight: 700;
+    }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ============================================================
+       FILE SELECTED STATE
+    ============================================================ */
+    .file-selected {
+      display: none;
+      background: rgba(255,106,0,.06);
+      border: 2px solid rgba(255,122,0,.4);
+      border-radius: 10px;
+      padding: 12px 16px;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .file-selected.show { display: flex; }
+    .file-sel-ico { font-size: 24px; flex-shrink: 0; }
+    .file-sel-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--cream);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-sel-size {
+      font-family: var(--px);
+      font-size: 7px;
+      color: var(--dim);
+    }
+    .file-remove {
+      background: none;
+      border: 1px solid rgba(255,68,68,.5);
+      border-radius: 6px;
+      color: var(--red3);
+      font-family: var(--px);
+      font-size: 7px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+    .file-remove:hover { background: rgba(255,68,68,.12); }
+
+    /* ============================================================
+       ANALYZE BUTTON
+    ============================================================ */
+    .analyze-wrap { text-align: center; margin-top: 22px; }
+    .analyze-btn {
+      font-family: var(--px);
+      font-size: 11px;
+      color: #050A14;
+      background: linear-gradient(180deg, #FFB200 0%, #FF8C00 45%, #FF5A00 100%);
+      border: 3px solid #8B4000;
+      border-radius: 12px;
+      padding: 16px 40px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #4A1800, 0 0 24px rgba(255,140,0,.4);
+      transition: transform .1s, box-shadow .1s;
+      text-shadow: 0 1px 0 rgba(255,220,0,.4);
+    }
+    .analyze-btn:hover { transform: translateY(-3px); box-shadow: 0 9px 0 #4A1800, 0 0 32px rgba(255,140,0,.5); }
+    .analyze-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #4A1800; }
+    .analyze-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: 0 3px 0 #4A1800;
+    }
+
+    /* ============================================================
+       LOADING
+    ============================================================ */
+    .loading-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 32px;
+    }
+    .loading-wrap.show { display: flex; }
+    .gear-spin {
+      font-size: 40px;
+      animation: gearSpin 1.2s linear infinite;
+      filter: drop-shadow(0 0 12px rgba(255,160,0,.7));
+    }
+    @keyframes gearSpin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-family: var(--px);
+      font-size: 9px;
+      color: var(--amber);
+      text-shadow: 0 0 8px rgba(255,160,0,.5);
+      animation: loadingDot 1.5s ease-in-out infinite;
+    }
+    @keyframes loadingDot {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .4; }
+    }
+    .loading-sub {
+      font-size: 12px;
+      color: var(--dim);
+      font-weight: 700;
+    }
+
+    /* ============================================================
+       ERROR MESSAGE
+    ============================================================ */
+    .error-msg {
+      display: none;
+      background: rgba(255,68,68,.08);
+      border: 2px solid rgba(255,68,68,.4);
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: var(--red3);
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 16px;
+      align-items: center;
+      gap: 10px;
+    }
+    .error-msg.show { display: flex; }
+
+    /* ============================================================
+       RESULTS PANEL
+    ============================================================ */
+    .results-panel { display: none; margin-top: 20px; }
+    .results-panel.show { display: block; }
+    .result-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .result-lbl {
+      font-family: var(--px);
+      font-size: 9px;
+      color: var(--amber);
+      text-shadow: 0 0 6px rgba(255,160,0,.4);
+    }
+    .copy-btn {
+      font-family: var(--px);
+      font-size: 7px;
+      color: var(--cyan);
+      background: rgba(0,212,255,.06);
+      border: 1px solid var(--cyan);
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .copy-btn:hover { background: rgba(0,212,255,.15); }
+
+    /* Markdown result container */
+    .result-body {
+      background: rgba(2,5,12,.6);
+      border: 1px solid rgba(255,122,0,.2);
+      border-radius: 10px;
+      padding: 20px 22px;
+      color: var(--cream);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+    .result-body h1, .result-body h2, .result-body h3 {
+      font-family: var(--rn);
+      color: var(--amber);
+      margin: 16px 0 8px;
+      font-weight: 800;
+    }
+    .result-body h2 { font-size: 16px; }
+    .result-body h3 { font-size: 14px; }
+    .result-body p { margin: 8px 0; }
+    .result-body strong { color: var(--gold); }
+    .result-body ul, .result-body ol { padding-left: 20px; margin: 8px 0; }
+    .result-body li { margin: 4px 0; }
+
+    /* Table styling */
+    .result-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    .result-body th {
+      background: rgba(255,106,0,.15);
+      border: 1px solid rgba(255,122,0,.4);
+      padding: 10px 12px;
+      color: var(--amber);
+      font-weight: 800;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .result-body td {
+      border: 1px solid rgba(255,122,0,.2);
+      padding: 9px 12px;
+      color: var(--cream);
+      vertical-align: top;
+    }
+    .result-body tr:nth-child(even) td { background: rgba(255,106,0,.04); }
+    .result-body tr:hover td { background: rgba(255,106,0,.08); }
+
+    /* Priority stars in table */
+    .result-body td:first-child { white-space: nowrap; font-size: 14px; }
+
+    /* Code */
+    .result-body code {
+      background: rgba(255,122,0,.12);
+      border: 1px solid rgba(255,122,0,.25);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 12px;
+      color: var(--fire2);
+    }
+    .result-body hr {
+      border: none;
+      border-top: 1px solid rgba(255,122,0,.25);
+      margin: 16px 0;
+    }
+
+    /* ============================================================
+       SCROLL REVEAL
+    ============================================================ */
+    @media (max-width: 600px) {
+      .companion-card { flex-wrap: wrap; }
+      .companion-location { text-align: left; }
+      .panel-body { padding: 18px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     FACTORY BACKGROUND
+============================================================ -->
+<div class="factory-bg">
+  <div class="sky-gradient"></div>
+
+  <!-- Stars -->
+  <div class="stars" id="stars"></div>
+
+  <!-- Factory SVG silhouette -->
+  <svg class="factory-svg" viewBox="0 0 1440 420" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Chimney flame gradients -->
+      <radialGradient id="g1" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#FF9D00" stop-opacity=".9"/>
+        <stop offset="40%"  stop-color="#FF5500" stop-opacity=".6"/>
+        <stop offset="100%" stop-color="#FF2200" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="g2" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#FFD000" stop-opacity=".85"/>
+        <stop offset="35%"  stop-color="#FF8800" stop-opacity=".5"/>
+        <stop offset="100%" stop-color="#FF4400" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="gsmall" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#FFC000" stop-opacity=".8"/>
+        <stop offset="100%" stop-color="#FF6600" stop-opacity="0"/>
+      </radialGradient>
+      <!-- Window glow -->
+      <filter id="winGlow">
+        <feGaussianBlur stdDeviation="2" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <!-- Building shadow filter -->
+      <filter id="bldgGlow">
+        <feGaussianBlur stdDeviation="1.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- ── FAR BACKGROUND ── -->
+    <rect x="0"    y="230" width="180" height="190" fill="#040A16"/>
+    <rect x="30"   y="185" width="75"  height="235" fill="#040A16"/>
+    <rect x="52"   y="130" width="16"  height="55"  fill="#040A16"/>
+    <rect x="1250" y="220" width="190" height="200" fill="#040A16"/>
+    <rect x="1300" y="180" width="90"  height="240" fill="#040A16"/>
+    <rect x="1318" y="120" width="15"  height="60"  fill="#040A16"/>
+    <rect x="1380" y="240" width="60"  height="180" fill="#040A16"/>
+
+    <!-- ── LEFT FACTORY COMPLEX ── -->
+    <!-- Main body -->
+    <rect x="100"  y="175" width="240" height="245" fill="#060D1E"/>
+    <rect x="88"   y="215" width="60"  height="205" fill="#060D1E"/>
+    <rect x="320"  y="190" width="55"  height="230" fill="#060D1E"/>
+    <!-- Chimneys left factory -->
+    <rect x="120"  y="70"  width="22"  height="105" fill="#060D1E"/>
+    <rect x="192"  y="88"  width="19"  height="87"  fill="#060D1E"/>
+    <rect x="262"  y="78"  width="21"  height="97"  fill="#060D1E"/>
+    <rect x="330"  y="85"  width="20"  height="105" fill="#060D1E"/>
+    <!-- Horizontal pipe -->
+    <rect x="100"  y="190" width="275" height="7"   fill="#07101E"/>
+    <!-- Small connector building -->
+    <rect x="370"  y="210" width="38"  height="210" fill="#060D1E"/>
+
+    <!-- ── CENTRAL TOWER (tallest) ── -->
+    <rect x="410"  y="45"  width="95"  height="375" fill="#071220"/>
+    <rect x="390"  y="130" width="32"  height="290" fill="#071220"/>
+    <rect x="495"  y="150" width="48"  height="270" fill="#071220"/>
+    <!-- Top chimney on central tower -->
+    <rect x="430"  y="8"   width="22"  height="37"  fill="#071220"/>
+    <rect x="505"  y="85"  width="18"  height="65"  fill="#071220"/>
+    <!-- Crane arm -->
+    <rect x="350"  y="90"  width="100" height="5"   fill="#060D1E"/>
+    <rect x="350"  y="80"  width="5"   height="40"  fill="#060D1E"/>
+    <!-- Crane cable (thin lines) -->
+    <line x1="400" y1="95"  x2="400" y2="145" stroke="#0A1428" stroke-width="2"/>
+    <line x1="420" y1="95"  x2="420" y2="145" stroke="#0A1428" stroke-width="2"/>
+
+    <!-- ── INDUSTRIAL TANKS ── -->
+    <!-- Tank base platform -->
+    <rect x="560"  y="290" width="190" height="130" fill="#060D1E"/>
+    <!-- Tank 1 (large cylinder) -->
+    <ellipse cx="620" cy="285" rx="52" ry="52" fill="#060D1E"/>
+    <rect    x="568" y="250" width="104" height="65" fill="#060D1E"/>
+    <!-- Tank 2 (medium) -->
+    <ellipse cx="710" cy="295" rx="42" ry="42" fill="#060D1E"/>
+    <rect    x="668" y="265" width="84"  height="55" fill="#060D1E"/>
+    <!-- Connecting pipes -->
+    <rect x="560"  y="270" width="8"   height="80"  fill="#071220"/>
+    <rect x="742"  y="280" width="8"   height="70"  fill="#071220"/>
+    <rect x="560"  y="268" width="192" height="6"   fill="#071220"/>
+    <!-- Vent chimney from tank area -->
+    <rect x="600"  y="200" width="14"  height="90"  fill="#060D1E"/>
+    <rect x="660"  y="220" width="12"  height="75"  fill="#060D1E"/>
+
+    <!-- ── RIGHT FACTORY ── -->
+    <rect x="760"  y="145" width="210" height="275" fill="#060D1E"/>
+    <rect x="960"  y="185" width="95"  height="235" fill="#060D1E"/>
+    <rect x="1040" y="200" width="80"  height="220" fill="#060D1E"/>
+    <!-- Chimneys right factory -->
+    <rect x="790"  y="58"  width="22"  height="87"  fill="#060D1E"/>
+    <rect x="862"  y="72"  width="20"  height="73"  fill="#060D1E"/>
+    <rect x="930"  y="62"  width="22"  height="83"  fill="#060D1E"/>
+    <rect x="970"  y="100" width="18"  height="85"  fill="#060D1E"/>
+    <!-- Horizontal pipe right factory -->
+    <rect x="760"  y="200" width="250" height="7"   fill="#07101E"/>
+    <!-- Pipe to tank area -->
+    <rect x="750"  y="275" width="20"  height="6"   fill="#07101E"/>
+
+    <!-- ── FAR RIGHT MID DISTANCE ── -->
+    <rect x="1110" y="205" width="170" height="215" fill="#050B1A"/>
+    <rect x="1150" y="160" width="75"  height="260" fill="#050B1A"/>
+    <rect x="1164" y="100" width="16"  height="60"  fill="#050B1A"/>
+    <rect x="1200" y="225" width="50"  height="195" fill="#050B1A"/>
+
+    <!-- ── FOREGROUND PIPES (horizontal) ── -->
+    <rect x="0"    y="390" width="1440" height="8"  fill="#040A16"/>
+    <rect x="80"   y="375" width="1360" height="4"  fill="#050C1C"/>
+    <!-- Vertical pipes rising from ground -->
+    <rect x="150"  y="330" width="6"   height="60"  fill="#050C1C"/>
+    <rect x="280"  y="345" width="5"   height="50"  fill="#050C1C"/>
+    <rect x="540"  y="338" width="6"   height="55"  fill="#050C1C"/>
+    <rect x="850"  y="340" width="5"   height="55"  fill="#050C1C"/>
+    <rect x="1050" y="348" width="5"   height="45"  fill="#050C1C"/>
+
+    <!-- ── WINDOWS (amber glow) ── -->
+    <!-- Left factory windows -->
+    <rect x="108"  y="195" width="14"  height="10"  fill="#FF9D30" opacity=".65" filter="url(#winGlow)"/>
+    <rect x="130"  y="195" width="14"  height="10"  fill="#FF9D30" opacity=".5"/>
+    <rect x="152"  y="195" width="14"  height="10"  fill="#FF9D30" opacity=".7"/>
+    <rect x="108"  y="220" width="14"  height="10"  fill="#FF9D30" opacity=".55"/>
+    <rect x="152"  y="220" width="14"  height="10"  fill="#FF9D30" opacity=".6"/>
+    <rect x="200"  y="200" width="12"  height="9"   fill="#FF9D30" opacity=".7"/>
+    <rect x="220"  y="200" width="12"  height="9"   fill="#FF9D30" opacity=".45"/>
+    <rect x="240"  y="200" width="12"  height="9"   fill="#FF9D30" opacity=".6"/>
+    <rect x="200"  y="225" width="12"  height="9"   fill="#FF9D30" opacity=".5"/>
+    <rect x="240"  y="225" width="12"  height="9"   fill="#FF9D30" opacity=".65"/>
+    <rect x="280"  y="205" width="12"  height="9"   fill="#FF9D30" opacity=".55"/>
+    <rect x="300"  y="205" width="12"  height="9"   fill="#FF9D30" opacity=".7"/>
+    <rect x="330"  y="210" width="10"  height="8"   fill="#FFBE60" opacity=".8"/>
+    <!-- Central tower windows -->
+    <rect x="418"  y="80"  width="10"  height="8"   fill="#FFBE60" opacity=".75"/>
+    <rect x="435"  y="80"  width="10"  height="8"   fill="#FFBE60" opacity=".6"/>
+    <rect x="452"  y="80"  width="10"  height="8"   fill="#FFBE60" opacity=".85"/>
+    <rect x="418"  y="105" width="10"  height="8"   fill="#FF9D30" opacity=".65"/>
+    <rect x="452"  y="105" width="10"  height="8"   fill="#FF9D30" opacity=".55"/>
+    <rect x="418"  y="130" width="10"  height="8"   fill="#FF9D30" opacity=".7"/>
+    <rect x="435"  y="130" width="10"  height="8"   fill="#FF9D30" opacity=".5"/>
+    <rect x="452"  y="130" width="10"  height="8"   fill="#FF9D30" opacity=".65"/>
+    <rect x="500"  y="165" width="10"  height="8"   fill="#FF9D30" opacity=".6"/>
+    <rect x="514"  y="165" width="10"  height="8"   fill="#FF9D30" opacity=".75"/>
+    <!-- Right factory windows -->
+    <rect x="770"  y="165" width="12"  height="9"   fill="#FF9D30" opacity=".6"/>
+    <rect x="790"  y="165" width="12"  height="9"   fill="#FF9D30" opacity=".75"/>
+    <rect x="816"  y="165" width="12"  height="9"   fill="#FF9D30" opacity=".5"/>
+    <rect x="840"  y="165" width="12"  height="9"   fill="#FF9D30" opacity=".65"/>
+    <rect x="770"  y="190" width="12"  height="9"   fill="#FFBE60" opacity=".8"/>
+    <rect x="816"  y="190" width="12"  height="9"   fill="#FF9D30" opacity=".55"/>
+    <rect x="858"  y="195" width="10"  height="8"   fill="#FF9D30" opacity=".6"/>
+    <rect x="876"  y="195" width="10"  height="8"   fill="#FF9D30" opacity=".7"/>
+    <rect x="900"  y="200" width="10"  height="8"   fill="#FF9D30" opacity=".5"/>
+    <rect x="965"  y="210" width="10"  height="8"   fill="#FF9D30" opacity=".6"/>
+    <rect x="980"  y="210" width="10"  height="8"   fill="#FF9D30" opacity=".75"/>
+    <!-- Far right windows -->
+    <rect x="1160" y="185" width="10"  height="8"   fill="#FF9D30" opacity=".5"/>
+    <rect x="1175" y="185" width="10"  height="8"   fill="#FF9D30" opacity=".6"/>
+    <rect x="1160" y="205" width="10"  height="8"   fill="#FF9D30" opacity=".45"/>
+
+    <!-- ── CHIMNEY FLAME GLOWS ── -->
+    <!-- Left factory chimneys -->
+    <circle cx="131"  cy="67"  r="18" fill="url(#g1)"     class="flame-glow"/>
+    <circle cx="201"  cy="85"  r="15" fill="url(#gsmall)" class="flame-glow" style="animation-delay:-.4s"/>
+    <circle cx="272"  cy="75"  r="16" fill="url(#g1)"     class="flame-glow" style="animation-delay:-.8s"/>
+    <circle cx="340"  cy="82"  r="15" fill="url(#g2)"     class="flame-glow" style="animation-delay:-.3s"/>
+    <!-- Central tower chimney -->
+    <circle cx="441"  cy="5"   r="22" fill="url(#g2)"     class="flame-glow" style="animation-delay:-.6s"/>
+    <circle cx="514"  cy="82"  r="14" fill="url(#gsmall)" class="flame-glow" style="animation-delay:-1s"/>
+    <!-- Tank area vents -->
+    <circle cx="607"  cy="197" r="12" fill="url(#gsmall)" class="flame-glow" style="animation-delay:-.2s"/>
+    <circle cx="666"  cy="217" r="10" fill="url(#gsmall)" class="flame-glow" style="animation-delay:-.7s"/>
+    <!-- Right factory chimneys -->
+    <circle cx="801"  cy="55"  r="18" fill="url(#g1)"     class="flame-glow" style="animation-delay:-.5s"/>
+    <circle cx="872"  cy="69"  r="16" fill="url(#gsmall)" class="flame-glow" style="animation-delay:-.9s"/>
+    <circle cx="941"  cy="59"  r="17" fill="url(#g1)"     class="flame-glow" style="animation-delay:-.1s"/>
+    <circle cx="979"  cy="97"  r="13" fill="url(#gsmall)" class="flame-glow" style="animation-delay:-.4s"/>
+    <!-- Far chimneys -->
+    <circle cx="60"   cy="127" r="11" fill="url(#gsmall)" class="flame-glow" style="animation-delay:-.6s"/>
+    <circle cx="1172" cy="97"  r="11" fill="url(#gsmall)" class="flame-glow" style="animation-delay:-.3s"/>
+    <circle cx="1326" cy="117" r="12" fill="url(#gsmall)" class="flame-glow" style="animation-delay:-.8s"/>
+
+    <!-- ── GROUND LINE ── -->
+    <rect x="0" y="415" width="1440" height="5" fill="#040A12"/>
+  </svg>
+
+  <!-- Smoke particles (CSS animated) -->
+  <div class="smoke" style="left:12.8%; bottom:42%; width:18px; height:18px; --sd:7s; --ss:0s;   --sx:8px;"></div>
+  <div class="smoke" style="left:13.2%; bottom:42%; width:14px; height:14px; --sd:8s; --ss:-3s;  --sx:-6px;"></div>
+  <div class="smoke" style="left:19.6%; bottom:44%; width:16px; height:16px; --sd:6s; --ss:-1s;  --sx:10px;"></div>
+  <div class="smoke" style="left:26.5%; bottom:43%; width:20px; height:20px; --sd:9s; --ss:-2s;  --sx:-8px;"></div>
+  <div class="smoke" style="left:30.5%; bottom:42%; width:15px; height:15px; --sd:7s; --ss:-4s;  --sx:6px;"></div>
+  <div class="smoke" style="left:30.7%; bottom:44%; width:12px; height:12px; --sd:8s; --ss:-5s;  --sx:-4px;"></div>
+  <div class="smoke" style="left:55.7%; bottom:38%; width:14px; height:14px; --sd:7s; --ss:-1s;  --sx:8px;"></div>
+  <div class="smoke" style="left:55.9%; bottom:38%; width:10px; height:10px; --sd:9s; --ss:-4s;  --sx:-6px;"></div>
+  <div class="smoke" style="left:65.4%; bottom:44%; width:18px; height:18px; --sd:8s; --ss:-2s;  --sx:10px;"></div>
+  <div class="smoke" style="left:65.8%; bottom:44%; width:14px; height:14px; --sd:6s; --ss:-6s;  --sx:-8px;"></div>
+
+  <!-- Ground / water reflection -->
+  <div class="factory-ground">
+    <div class="water-line" style="top:15%; animation-delay:0s;    opacity:.5"></div>
+    <div class="water-line" style="top:35%; animation-delay:-1.5s; opacity:.35"></div>
+    <div class="water-line" style="top:55%; animation-delay:-3s;   opacity:.25"></div>
+    <div class="water-line" style="top:72%; animation-delay:-0.8s; opacity:.2"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     HEADER
+============================================================ -->
+<header>
+  <span class="hdr-ico">⚙️</span>
+  <div>
+    <div class="hdr-title">PROOF AGENT</div>
+    <div class="hdr-sub">研修資料 誤字脱字チェッカー</div>
+  </div>
+  <a href="../../index.html" class="back-btn">⚓ HOME</a>
+</header>
+
+<!-- ============================================================
+     COMPANION CARD
+============================================================ -->
+<div class="companion-wrap">
+  <div class="companion-card">
+    <div class="companion-badge">✦ NEW COMPANION JOINED ✦</div>
+    <div class="companion-ico">⚙️</div>
+    <div class="companion-body">
+      <div class="companion-name">LUMINA — 鋼鉄の校正師</div>
+      <div class="companion-quote">"誤字は錆だ。私が磨いてやろう。"</div>
+      <div class="companion-abilities">
+        <span class="ability-tag">瞬時誤字検出</span>
+        <span class="ability-tag">表記ゆれ察知</span>
+        <span class="ability-tag">文体統一</span>
+        <span class="ability-tag">句読点解析</span>
+      </div>
+    </div>
+    <div class="companion-location">出会い場所:<br>川崎工場地帯の夜</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAIN
+============================================================ -->
+<main>
+  <div class="panel">
+    <div class="panel-hdr">
+      <span style="font-size:15px">🔍</span>
+      <span class="panel-hdr-lbl">UPLOAD & ANALYZE</span>
+    </div>
+    <div class="panel-body">
+
+      <!-- API KEY SECTION -->
+      <div class="apikey-section" id="apikeySection">
+        <div class="apikey-label">🔑 ANTHROPIC API KEY</div>
+        <div class="apikey-note">ANTHROPIC_API_KEY が未設定の場合は入力してください（ローカル処理のみ）</div>
+        <div class="apikey-row">
+          <input type="password" id="apikeyInput" class="apikey-input"
+            placeholder="sk-ant-api03-..." autocomplete="off"/>
+          <button class="save-key-btn" id="saveKeyBtn">SAVE</button>
+        </div>
+        <div class="key-status" id="keyStatus"></div>
+      </div>
+
+      <div class="amber-div"></div>
+
+      <!-- DROP ZONE -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".pdf,.pptx,.docx"/>
+        <span class="drop-ico">📋</span>
+        <div class="drop-title">ここにファイルをドロップ</div>
+        <div class="drop-sub">PDF / PPTX / DOCX に対応　最大 20MB</div>
+      </div>
+
+      <!-- Selected file info -->
+      <div class="file-selected" id="fileSelected">
+        <span class="file-sel-ico" id="fileIco">📄</span>
+        <span class="file-sel-name" id="fileName">—</span>
+        <span class="file-sel-size" id="fileSize">—</span>
+        <button class="file-remove" id="fileRemove">✕ 削除</button>
+      </div>
+
+      <!-- Analyze button -->
+      <div class="analyze-wrap">
+        <button class="analyze-btn" id="analyzeBtn" disabled>
+          ⚙️ 校正スタート
+        </button>
+      </div>
+
+      <!-- Loading state -->
+      <div class="loading-wrap" id="loadingWrap">
+        <div class="gear-spin">⚙️</div>
+        <div class="loading-text">LUMINA ANALYZING…</div>
+        <div class="loading-sub">ルミナが資料を精査しています。少々お待ちください。</div>
+      </div>
+
+      <!-- Error message -->
+      <div class="error-msg" id="errorMsg">
+        <span>⚠️</span>
+        <span id="errorText">エラーが発生しました</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESULTS PANEL -->
+  <div class="results-panel" id="resultsPanel">
+    <div class="panel">
+      <div class="panel-hdr">
+        <span style="font-size:15px">📊</span>
+        <span class="panel-hdr-lbl">CORRECTION REPORT</span>
+      </div>
+      <div class="panel-body">
+        <div class="result-actions">
+          <span class="result-lbl">✦ 校正レポート</span>
+          <button class="copy-btn" id="copyBtn">📋 コピー</button>
+        </div>
+        <div class="result-body" id="resultBody"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  // ── Stars ──
+  (function() {
+    const container = document.getElementById('stars');
+    for (let i = 0; i < 120; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = Math.random() * 2 + 1;
+      s.style.cssText = `
+        width: ${size}px; height: ${size}px;
+        left: ${Math.random() * 100}%;
+        top:  ${Math.random() * 65}%;
+        --dur:   ${2 + Math.random() * 4}s;
+        --delay: ${-Math.random() * 4}s;
+        --op:    ${0.3 + Math.random() * 0.6};
+      `;
+      container.appendChild(s);
+    }
+  })();
+
+  // ── API Key handling ──
+  const apikeySection = document.getElementById('apikeySection');
+  const apikeyInput   = document.getElementById('apikeyInput');
+  const saveKeyBtn    = document.getElementById('saveKeyBtn');
+  const keyStatus     = document.getElementById('keyStatus');
+  let storedKey = localStorage.getItem('lumina_api_key') || '';
+
+  async function checkApiStatus() {
+    try {
+      const res = await fetch('/api-status');
+      const data = await res.json();
+      if (data.has_key) {
+        apikeySection.style.display = 'none';
+        storedKey = '';
+      } else if (storedKey) {
+        apikeyInput.value = storedKey;
+        keyStatus.className = 'key-status key-ok';
+        keyStatus.textContent = '✓ 保存済みのキーを使用します';
+      }
+    } catch(e) {}
+  }
+  checkApiStatus();
+
+  saveKeyBtn.addEventListener('click', () => {
+    const val = apikeyInput.value.trim();
+    if (!val) {
+      keyStatus.className = 'key-status key-err';
+      keyStatus.textContent = 'APIキーを入力してください';
+      return;
+    }
+    localStorage.setItem('lumina_api_key', val);
+    storedKey = val;
+    keyStatus.className = 'key-status key-ok';
+    keyStatus.textContent = '✓ APIキーを保存しました';
+  });
+
+  // ── File handling ──
+  const dropZone    = document.getElementById('dropZone');
+  const fileInput   = document.getElementById('fileInput');
+  const fileSelected = document.getElementById('fileSelected');
+  const fileIco     = document.getElementById('fileIco');
+  const fileName    = document.getElementById('fileName');
+  const fileSize    = document.getElementById('fileSize');
+  const fileRemove  = document.getElementById('fileRemove');
+  const analyzeBtn  = document.getElementById('analyzeBtn');
+  const loadingWrap = document.getElementById('loadingWrap');
+  const errorMsg    = document.getElementById('errorMsg');
+  const errorText   = document.getElementById('errorText');
+  const resultsPanel = document.getElementById('resultsPanel');
+  const resultBody  = document.getElementById('resultBody');
+  const copyBtn     = document.getElementById('copyBtn');
+
+  let selectedFile = null;
+
+  const EXT_ICO = { '.pdf': '📕', '.pptx': '📊', '.docx': '📝' };
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) setFile(fileInput.files[0]);
+    fileInput.value = '';
+  });
+
+  function ext(name) { return name.slice(name.lastIndexOf('.')).toLowerCase(); }
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1048576).toFixed(1) + ' MB';
+  }
+
+  function setFile(file) {
+    const e = ext(file.name);
+    if (!['.pdf','.pptx','.docx'].includes(e)) {
+      showError('対応していないファイル形式です（PDF / PPTX / DOCX のみ）');
+      return;
+    }
+    selectedFile = file;
+    fileIco.textContent = EXT_ICO[e] || '📄';
+    fileName.textContent = file.name;
+    fileName.title = file.name;
+    fileSize.textContent = fmtSize(file.size);
+    fileSelected.classList.add('show');
+    analyzeBtn.disabled = false;
+    hideError();
+  }
+
+  fileRemove.addEventListener('click', () => {
+    selectedFile = null;
+    fileSelected.classList.remove('show');
+    analyzeBtn.disabled = true;
+    hideError();
+  });
+
+  function showError(msg) {
+    errorText.textContent = msg;
+    errorMsg.classList.add('show');
+  }
+  function hideError() {
+    errorMsg.classList.remove('show');
+  }
+
+  // ── Analyze ──
+  analyzeBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+
+    const apiKey = apikeyInput.value.trim() || storedKey ||
+                   localStorage.getItem('lumina_api_key') || '';
+
+    analyzeBtn.disabled = true;
+    loadingWrap.classList.add('show');
+    resultsPanel.classList.remove('show');
+    hideError();
+
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    if (apiKey) fd.append('api_key', apiKey);
+
+    try {
+      const res = await fetch('/proofread', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showError(data.error || 'サーバーエラーが発生しました');
+      } else {
+        resultBody.innerHTML = marked.parse(data.result);
+        resultsPanel.classList.add('show');
+        resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } catch(e) {
+      showError('通信エラーが発生しました。サーバーが起動しているか確認してください。');
+    } finally {
+      loadingWrap.classList.remove('show');
+      analyzeBtn.disabled = false;
+    }
+  });
+
+  // ── Copy ──
+  copyBtn.addEventListener('click', () => {
+    const text = resultBody.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      copyBtn.textContent = '✓ コピー完了';
+      setTimeout(() => { copyBtn.textContent = '📋 コピー'; }, 2000);
+    });
+  });
+</script>
+</body>
+</html>
