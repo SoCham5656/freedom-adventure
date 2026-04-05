@@ -1,28 +1,31 @@
 @echo off
-chcp 65001 > nul
 cd /d "%~dp0"
 
 echo ========================================
-echo   PDF Converter を起動しています...
+echo   PDF CONVERTER - Starting...
 echo ========================================
 echo.
 
-python --version > nul 2>&1
+python --version
 if errorlevel 1 (
-    echo [エラー] Python が見つかりません。
-    echo https://www.python.org からインストールしてください。
+    echo [ERROR] Python not found.
     pause
     exit /b 1
 )
 
-echo 依存パッケージを確認中...
-pip install -r requirements.txt -q
+echo Installing packages...
+python -m pip install flask pywin32
+if errorlevel 1 (
+    echo [ERROR] pip install failed.
+    pause
+    exit /b 1
+)
+
 echo.
-echo サーバー起動中... ブラウザが自動で開きます。
-echo 終了するには このウィンドウを閉じるか Ctrl+C を押してください。
+echo Starting server at http://localhost:5001
+echo Press Ctrl+C to stop.
 echo.
 
-:: 2秒待ってからブラウザを開く
 (ping -n 3 127.0.0.1 > nul && start http://localhost:5001) &
 
 python app.py
