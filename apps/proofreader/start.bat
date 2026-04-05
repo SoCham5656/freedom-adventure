@@ -16,7 +16,7 @@ if errorlevel 1 (
 )
 
 echo 依存パッケージを確認中...
-pip install -r requirements.txt -q
+python -m pip install -r requirements.txt -q
 echo.
 
 if "%ANTHROPIC_API_KEY%"=="" (
