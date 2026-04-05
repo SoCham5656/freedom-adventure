@@ -1,5 +1,7 @@
 flask
 anthropic
+openai
+google-generativeai
 pdfplumber
 python-pptx
 python-docx

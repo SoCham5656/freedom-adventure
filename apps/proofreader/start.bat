@@ -14,7 +14,7 @@ if errorlevel 1 (
 )
 
 echo Installing packages...
-python -m pip install flask anthropic pdfplumber python-pptx python-docx
+python -m pip install flask anthropic openai google-generativeai pdfplumber python-pptx python-docx
 if errorlevel 1 (
     echo [ERROR] pip install failed.
     pause

@@ -917,10 +917,17 @@
     </div>
     <div class="panel-body">
 
-      <!-- API KEY SECTION -->
+      <!-- PROVIDER + API KEY SECTION -->
       <div class="apikey-section" id="apikeySection">
-        <div class="apikey-label">🔑 ANTHROPIC API KEY</div>
-        <div class="apikey-note">ANTHROPIC_API_KEY が未設定の場合は入力してください（ローカル処理のみ）</div>
+        <div class="apikey-label">🤖 AI PROVIDER</div>
+        <div class="apikey-row" style="margin-bottom:12px">
+          <select id="providerSelect" class="apikey-input" style="cursor:pointer">
+            <option value="claude">Claude (Anthropic)　— claude-opus-4-6</option>
+            <option value="openai">GPT-4o (OpenAI)</option>
+            <option value="gemini">Gemini 2.0 Flash (Google)</option>
+          </select>
+        </div>
+        <div class="apikey-label">🔑 API KEY</div>
         <div class="apikey-row">
           <input type="password" id="apikeyInput" class="apikey-input"
             placeholder="sk-ant-api03-..." autocomplete="off"/>
@@ -1008,28 +1015,39 @@
     }
   })();
 
-  // ── API Key handling ──
-  const apikeySection = document.getElementById('apikeySection');
-  const apikeyInput   = document.getElementById('apikeyInput');
-  const saveKeyBtn    = document.getElementById('saveKeyBtn');
-  const keyStatus     = document.getElementById('keyStatus');
-  let storedKey = localStorage.getItem('lumina_api_key') || '';
+  // ── Provider & API Key handling ──
+  const providerSelect = document.getElementById('providerSelect');
+  const apikeyInput    = document.getElementById('apikeyInput');
+  const saveKeyBtn     = document.getElementById('saveKeyBtn');
+  const keyStatus      = document.getElementById('keyStatus');
 
-  async function checkApiStatus() {
-    try {
-      const res = await fetch('/api-status');
-      const data = await res.json();
-      if (data.has_key) {
-        apikeySection.style.display = 'none';
-        storedKey = '';
-      } else if (storedKey) {
-        apikeyInput.value = storedKey;
-        keyStatus.className = 'key-status key-ok';
-        keyStatus.textContent = '✓ 保存済みのキーを使用します';
-      }
-    } catch(e) {}
+  const PLACEHOLDERS = {
+    claude: 'sk-ant-api03-...',
+    openai: 'sk-...',
+    gemini: 'AIzaSy...',
+  };
+  const STORAGE_KEYS = {
+    claude: 'lumina_key_claude',
+    openai: 'lumina_key_openai',
+    gemini: 'lumina_key_gemini',
+  };
+
+  function loadKeyForProvider(provider) {
+    const saved = localStorage.getItem(STORAGE_KEYS[provider]) || '';
+    apikeyInput.value = saved;
+    apikeyInput.placeholder = PLACEHOLDERS[provider] || '';
+    if (saved) {
+      keyStatus.className = 'key-status key-ok';
+      keyStatus.textContent = '✓ 保存済みのキーを使用します';
+    } else {
+      keyStatus.textContent = '';
+    }
   }
-  checkApiStatus();
+
+  providerSelect.addEventListener('change', () => {
+    loadKeyForProvider(providerSelect.value);
+  });
+  loadKeyForProvider(providerSelect.value);
 
   saveKeyBtn.addEventListener('click', () => {
     const val = apikeyInput.value.trim();
@@ -1038,8 +1056,7 @@
       keyStatus.textContent = 'APIキーを入力してください';
       return;
     }
-    localStorage.setItem('lumina_api_key', val);
-    storedKey = val;
+    localStorage.setItem(STORAGE_KEYS[providerSelect.value], val);
     keyStatus.className = 'key-status key-ok';
     keyStatus.textContent = '✓ APIキーを保存しました';
   });
@@ -1118,8 +1135,9 @@
   analyzeBtn.addEventListener('click', async () => {
     if (!selectedFile) return;
 
-    const apiKey = apikeyInput.value.trim() || storedKey ||
-                   localStorage.getItem('lumina_api_key') || '';
+    const provider = providerSelect.value;
+    const apiKey   = apikeyInput.value.trim() ||
+                     localStorage.getItem(STORAGE_KEYS[provider]) || '';
 
     analyzeBtn.disabled = true;
     loadingWrap.classList.add('show');
@@ -1128,6 +1146,7 @@
 
     const fd = new FormData();
     fd.append('file', selectedFile);
+    fd.append('provider', provider);
     if (apiKey) fd.append('api_key', apiKey);
 
     try {

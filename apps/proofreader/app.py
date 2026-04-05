@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request
-import anthropic
 
 app = Flask(__name__)
 
@@ -89,14 +88,46 @@ def extract_text(file_bytes: bytes, ext: str) -> str:
     raise ValueError(f"非対応: {ext}")
 
 
+def call_claude(api_key: str, text: str) -> str:
+    import anthropic
+    client = anthropic.Anthropic(api_key=api_key)
+    msg = client.messages.create(
+        model='claude-opus-4-6',
+        max_tokens=4096,
+        system=SYSTEM_PROMPT,
+        messages=[{'role': 'user', 'content': f'以下の資料を校正してください。\n\n{text}'}],
+    )
+    return msg.content[0].text
+
+
+def call_openai(api_key: str, text: str) -> str:
+    from openai import OpenAI
+    client = OpenAI(api_key=api_key)
+    res = client.chat.completions.create(
+        model='gpt-4o',
+        max_tokens=4096,
+        messages=[
+            {'role': 'system', 'content': SYSTEM_PROMPT},
+            {'role': 'user',   'content': f'以下の資料を校正してください。\n\n{text}'},
+        ],
+    )
+    return res.choices[0].message.content
+
+
+def call_gemini(api_key: str, text: str) -> str:
+    import google.generativeai as genai
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel(
+        model_name='gemini-2.0-flash',
+        system_instruction=SYSTEM_PROMPT,
+    )
+    res = model.generate_content(f'以下の資料を校正してください。\n\n{text}')
+    return res.text
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
-
-
-@app.route('/api-status')
-def api_status():
-    return jsonify({'has_key': bool(os.environ.get('ANTHROPIC_API_KEY'))})
 
 
 @app.route('/proofread', methods=['POST'])
@@ -112,9 +143,10 @@ def proofread():
     if ext not in ALLOWED:
         return jsonify({'error': f'非対応の形式です: {ext}（PDF / PPTX / DOCX のみ対応）'}), 400
 
-    api_key = request.form.get('api_key') or os.environ.get('ANTHROPIC_API_KEY')
+    provider = request.form.get('provider', 'claude')
+    api_key  = request.form.get('api_key', '').strip()
     if not api_key:
-        return jsonify({'error': 'Anthropic API キーが設定されていません'}), 400
+        return jsonify({'error': 'API キーを入力してください'}), 400
 
     file_bytes = file.read()
     if len(file_bytes) > 20 * 1024 * 1024:
@@ -128,17 +160,16 @@ def proofread():
     if not text.strip():
         return jsonify({'error': 'テキストを抽出できませんでした（画像PDFは非対応です）'}), 400
 
-    client = anthropic.Anthropic(api_key=api_key)
     try:
-        msg = client.messages.create(
-            model='claude-opus-4-6',
-            max_tokens=4096,
-            system=SYSTEM_PROMPT,
-            messages=[{'role': 'user', 'content': f'以下の資料を校正してください。\n\n{text}'}],
-        )
-        return jsonify({'result': msg.content[0].text})
-    except anthropic.AuthenticationError:
-        return jsonify({'error': 'API キーが無効です。正しいキーを入力してください。'}), 401
+        if provider == 'claude':
+            result = call_claude(api_key, text)
+        elif provider == 'openai':
+            result = call_openai(api_key, text)
+        elif provider == 'gemini':
+            result = call_gemini(api_key, text)
+        else:
+            return jsonify({'error': f'不明なプロバイダー: {provider}'}), 400
+        return jsonify({'result': result})
     except Exception as e:
         return jsonify({'error': f'API エラー: {e}'}), 500
 
