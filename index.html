@@ -1249,5 +1249,225 @@ document.addEventListener('click',e=>{
 })();
 </script>
 
+<!-- ============================================================
+     MUSIC PLAYER
+============================================================ -->
+<style>
+  /* ---- Floating music player ---- */
+  .music-player {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    z-index: 9999;
+    font-family: 'Press Start 2P', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .music-panel {
+    background: linear-gradient(160deg, #FFFEF8, #FFF4C0);
+    border: 4px solid #5C3310;
+    border-radius: 14px;
+    padding: 12px 16px;
+    box-shadow:
+      inset 0 0 0 2px #FFE866,
+      0 8px 28px rgba(0,0,0,.5);
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 220px;
+    max-width: 260px;
+    pointer-events: all;
+  }
+  .music-panel.open { display: flex; }
+  .music-panel-hdr {
+    font-size: 7px;
+    color: #5C3310;
+    text-align: center;
+    border-bottom: 2px solid #C8960C;
+    padding-bottom: 6px;
+    margin-bottom: 2px;
+  }
+  .music-track-name {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    color: #2D1600;
+    text-align: center;
+    line-height: 1.5;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .music-controls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+  .music-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: #3A1400;
+    background: linear-gradient(180deg, #FFE566 0%, #FFCC00 45%, #FF8800 100%);
+    border: 2px solid #7A4A00;
+    border-radius: 8px;
+    padding: 7px 12px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #5C3800;
+    transition: transform .1s, box-shadow .1s;
+    pointer-events: all;
+  }
+  .music-btn:hover  { transform: translateY(-1px); box-shadow: 0 5px 0 #5C3800; }
+  .music-btn:active { transform: translateY(2px);  box-shadow: 0 1px 0 #5C3800; }
+  .music-attrib {
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: #8B6B00;
+    text-align: center;
+  }
+  /* Toggle button */
+  .music-toggle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: #3A1400;
+    background: linear-gradient(180deg, #FFE566 0%, #FFCC00 45%, #FF8800 100%);
+    border: 3px solid #7A4A00;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #5C3800, 0 8px 16px rgba(0,0,0,.4);
+    transition: transform .1s, box-shadow .1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    pointer-events: all;
+  }
+  .music-toggle:hover  { transform: translateY(-2px); box-shadow: 0 7px 0 #5C3800, 0 10px 20px rgba(0,0,0,.4); }
+  .music-toggle:active { transform: translateY(3px);  box-shadow: 0 2px 0 #5C3800; }
+  .music-toggle.playing { animation: musicPulse 2s ease-in-out infinite; }
+  @keyframes musicPulse {
+    0%,100% { box-shadow: 0 5px 0 #5C3800, 0 0 0 0 rgba(255,184,0,.6); }
+    50%      { box-shadow: 0 5px 0 #5C3800, 0 0 0 10px rgba(255,184,0,0); }
+  }
+</style>
+
+<div class="music-player" id="musicPlayer">
+  <!-- expanded panel -->
+  <div class="music-panel" id="musicPanel">
+    <div class="music-panel-hdr">🎵 NOW PLAYING</div>
+    <div class="music-track-name" id="trackName">—</div>
+    <div class="music-controls">
+      <button class="music-btn" id="prevBtn">◀◀</button>
+      <button class="music-btn" id="playPauseBtn">▶</button>
+      <button class="music-btn" id="nextBtn">▶▶</button>
+    </div>
+    <div class="music-attrib">Music: Kevin MacLeod (CC-BY 3.0)</div>
+  </div>
+  <!-- toggle button -->
+  <button class="music-toggle" id="musicToggle" title="BGM">🎵</button>
+</div>
+
+<audio id="bgmAudio" preload="none"></audio>
+
+<script>
+(function() {
+  const BASE = 'https://archive.org/download/Kevin-MacLeod_Royalty-Free_2017_FullAlbum/Royalty%20Free/Kevin%20MacLeod%20-%2000%20-%20';
+  const TRACKS = [
+    { name: 'Airship Serenity',      file: 'Airship%20Serenity.mp3' },
+    { name: 'Ascending the Vale',    file: 'Ascending%20the%20Vale.mp3' },
+    { name: 'Dewdrop Fantasy',       file: 'Dewdrop%20Fantasy.mp3' },
+    { name: 'Fireflies and Stardust',file: 'Fireflies%20and%20Stardust.mp3' },
+    { name: 'Galway',                file: 'Galway.mp3' },
+    { name: 'Eternity',              file: 'Eternity.mp3' },
+    { name: 'Angel Share',           file: 'Angel%20Share.mp3' },
+    { name: 'Crossing the Chasm',    file: 'Crossing%20the%20Chasm.mp3' },
+  ];
+
+  // Shuffle
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  let playlist = shuffle(TRACKS);
+  let idx = 0;
+  let panelOpen = false;
+
+  const audio        = document.getElementById('bgmAudio');
+  const musicToggle  = document.getElementById('musicToggle');
+  const musicPanel   = document.getElementById('musicPanel');
+  const trackNameEl  = document.getElementById('trackName');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const prevBtn      = document.getElementById('prevBtn');
+  const nextBtn      = document.getElementById('nextBtn');
+
+  function loadTrack(i) {
+    const t = playlist[i];
+    audio.src = BASE + t.file;
+    trackNameEl.textContent = t.name;
+    audio.volume = 0.4;
+  }
+
+  function playTrack(i) {
+    loadTrack(i);
+    audio.play().catch(() => {});
+    playPauseBtn.textContent = '⏸';
+    musicToggle.classList.add('playing');
+  }
+
+  audio.addEventListener('ended', () => {
+    idx = (idx + 1) % playlist.length;
+    if (idx === 0) playlist = shuffle(TRACKS); // re-shuffle each cycle
+    playTrack(idx);
+  });
+
+  // Toggle panel
+  musicToggle.addEventListener('click', () => {
+    panelOpen = !panelOpen;
+    musicPanel.classList.toggle('open', panelOpen);
+
+    // First click: start playing
+    if (audio.paused && audio.src === '') {
+      playTrack(idx);
+    }
+  });
+
+  // Play / Pause
+  playPauseBtn.addEventListener('click', () => {
+    if (audio.paused) {
+      if (!audio.src) playTrack(idx);
+      else { audio.play(); playPauseBtn.textContent = '⏸'; musicToggle.classList.add('playing'); }
+    } else {
+      audio.pause();
+      playPauseBtn.textContent = '▶';
+      musicToggle.classList.remove('playing');
+    }
+  });
+
+  // Previous
+  prevBtn.addEventListener('click', () => {
+    idx = (idx - 1 + playlist.length) % playlist.length;
+    playTrack(idx);
+  });
+
+  // Next
+  nextBtn.addEventListener('click', () => {
+    idx = (idx + 1) % playlist.length;
+    if (idx === 0) playlist = shuffle(TRACKS);
+    playTrack(idx);
+  });
+})();
+</script>
+
 </body>
 </html>
